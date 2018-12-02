@@ -1,0 +1,6 @@
+# Exclude files in ./datasets/
+datasets/*
+
+# But keep one file, otherwise the directory won't sync
+!datasets/readme
+
