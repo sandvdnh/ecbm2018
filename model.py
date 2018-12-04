@@ -11,8 +11,8 @@ from model_funcs import *
       
         
 class DCGAN:
-    def __init__(self, input_height=64, input_width=64,batch_size=64, sample_num = 64, 
-         output_height=64, output_width=64,g_dim=[1024, 512, 256, 128], d_dim=[64, 128, 256, 512], s_size=4,):
+    def __init__(self, input_height=64, input_width=64, batch_size=64, sample_num = 64, output_height=64, output_width=64,
+                 g_dim=[1024, 512, 256, 128], d_dim=[64, 128, 256, 512], s_size=4, z_dim=100, dataset='SVHN'):
         '''
         Initialize variables for implementation and calculations
         Args:
@@ -33,13 +33,20 @@ class DCGAN:
         self.d_dim = [3] + d_dim
 
         self.s_size = s_size
+        self.z_dim = z_dim
+        
+        self.dataset = dataset
         
         self.loss()
-        self.generator()
+        self.g = generator()
+        self.d = discriminator()
+        
+        self.z = tf.random_uniform([self.batch_size, self.z_dim], minval=-1.0, maxval=1.0)
+        
         self.saver = tf.train.Saver()
 
         
-    def generator(self, inputs, training=):
+    def generator(self, inputs, training=False):
         '''
         Implementation of discriminator
         
@@ -78,7 +85,7 @@ class DCGAN:
         self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='generator')
         return outputs
         
-    def discriminator(self, inputs, training=):
+    def discriminator(self, inputs, training=False):
         '''
         Implementation of discriminator
         Uses functions from model_funcs.py
@@ -117,39 +124,52 @@ class DCGAN:
         self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
         return outputs
         
-    def loss(self):
+    def loss(self, train_data):
         '''
-        Calculating loss based on 
+        build models, calculate losses
         '''
-        # One-hot coding
-        y_one_hot = tf.one_hot(self.targets, self.num_classes)
-        y_reshaped = tf.reshape(y_one_hot, self.logits.get_shape())
+        # get models
+        generated = self.g(self.z , training=True)
+        g_outputs = discriminator(generated, training=True)
+        d_outputs = self.d(traindata, training=True)
         
         # Softmax cross entropy loss
-        loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits, labels=y_reshaped)
-        self.loss = tf.reduce_mean(loss)
+        g_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.g_loss = tf.reduce_mean(g_loss)
         
+        d_loss_real = tf.nn.softmax_cross_entropy_with_logits_v2(logits=t_outputs, labels=tf.ones([self.batch_size]))
+        self.d_loss_real = tf.reduce_mean(d_loss_real)
         
-    def train(self, batches, learning_rate=0.0002, beta1=0.5):
+        d_loss_fake = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.d_loss_fake = tf.reduce_mean(d_loss_fake)
+        
+        self.d_loss = self.dloss_real + self.d_loss_fake
+        
+                                                         
+        
+    def train(self, images, epochs=2, batch_size=245, learning_rate=0.0002, beta1=0.5):
         '''
         Input Args:
-        batches - 
-        max_count - 
+        batches - batches of images for training
+        epochs
+        batch_size
         save_every_n - 
         
         Outputs:
         
         '''
-        
+       
         # using Adam optimizer as specified in the project paper
-        d_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1) #generator optimizer
-        g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1) # discriminator optimizer
+        d_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(self.d_loss) #generator optimizer
+        g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(self.g_loss) # discriminator optimizer
         
         tf.global_variables_initializer().run()
         
         counter = 1
         start_time = time.time()
         
+        
+        # For loading a checkpoint
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
         if could_load:
           counter = checkpoint_counter
@@ -157,15 +177,17 @@ class DCGAN:
         else:
           print(" [!] Load failed...")
         
-        # learning variables
-        num_train = 49000
-        batch_size = 250
-        num_batch = num_train//batch_size
         # run
         with tf.Session() as sess:
             sess.run(init)
-            for e in range(20):
-                for i in range(num_batch):
+            
+            #generate batches based on which dataset is being used
+            #if self.data_set == '': --> uncomment if needed
+            batches = get_batches(batch_size, self.dataset)
+            
+            
+            for e in range(epoch):
+                for i in range(iters):
                     batch_xs, batch_ys = X_train[i*batch_size:(i+1)*batch_size], y_train[i*batch_size:(i+1)*batch_size]
                     sess.run(train_step, feed_dict={x_tf: batch_xs, y_tf: batch_ys})
                 val_acc = sess.run(accuracy, feed_dict={x_tf: X_val, y_tf: y_val})
