@@ -97,9 +97,53 @@ def get_batches_celeba(batch_size):
             yield batch
 
 
+def get_batches_cars(batch_size):
+    '''
+    returns iterator for the cars dataset
+    Expects data files to be located in ./dataset/cars_train/
+    '''
+    path = './datasets/cars_train/'
+    filenames = []
+    filenames += [f for f in listdir(path) if isfile(join(path, f))]
+    n = len(filenames)
+    n_batches = int(n / batch_size)
+    counter = 0
+    bounding_boxes_ = loadmat('./datasets/cars_train_annos.mat')['annotations'][0]
+    bounding_boxes = np.zeros((n, 4), dtype = np.uint)
+
+    for i in range(len(bounding_boxes_)):
+        minx = int(bounding_boxes_[i][0][0])
+        miny = int(bounding_boxes_[i][1][0])
+        maxx = int(bounding_boxes_[i][3][0])
+        maxy = int(bounding_boxes_[i][2][0])
+        bounding_boxes[i] = np.array([minx, maxx, miny, maxy])
+        filenames[i] = bounding_boxes_[i][-1][0]
+
+    while True and counter < 3:
+        for i in range(n_batches):
+            batch = np.zeros((batch_size, 64, 64, 3))
+            for j in range(batch_size):
+                x = plt.imread(path + filenames[i * batch_size + j])
+                if len(x.shape) == 2:
+                    x = np.repeat(np.reshape(x, (*x.shape, 1)), 3, axis = 2)
+                x_total, y_total = x.shape[:2]
+                minx = int(x_total) - int(bounding_boxes[i * batch_size + j, 0])
+                maxx = int(x_total) - int(bounding_boxes[i * batch_size + j, 1])
+                minx = bounding_boxes[i * batch_size + j, 0]
+                maxy = bounding_boxes[i * batch_size + j, 1]
+                miny = bounding_boxes[i * batch_size + j, 2]
+                maxx = bounding_boxes[i * batch_size + j, 3]
+                x = x[miny : maxy, minx : maxx, :].astype(np.uint)
+                x = imresize(x, (64, 64, 3)) / 255
+                x = 2 * x - 1
+                batch[j] = x.copy()
+            yield batch
+
+
 # Simple example on how to use this
 if __name__ == '__main__':
-    my_iterator = get_batches(10, dataset = 'celeba')
+    my_iterator = get_batches(10, dataset = 'cars')
     for i in range(3):
         images = next(my_iterator)
+
 
