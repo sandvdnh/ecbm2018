@@ -37,14 +37,38 @@ class DCGAN:
         
         self.dataset = dataset
         
-        self.loss()
-        self.g = generator()
-        self.d = discriminator()
         
         self.z = tf.random_uniform([self.batch_size, self.z_dim], minval=-1.0, maxval=1.0)
         
-        self.saver = tf.train.Saver()
-
+        self.build_model()
+        
+    
+    def build_model(self):
+        '''
+        build model, calculate losses
+        '''
+        # prep values to build model
+        image_dims = [self.input_height, self.input_width, self.c_dim]
+        self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
+        
+        self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
+        
+        # build models
+        generated = generator(self.z , training=True)
+        g_outputs = discriminator(generated, training=True)
+        d_outputs = discriminator(traindata, training=True)
+        
+        # Softmax cross entropy loss
+        g_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.g_loss = tf.reduce_mean(g_loss)
+        
+        d_loss_real = tf.nn.softmax_cross_entropy_with_logits_v2(logits=t_outputs, labels=tf.ones([self.batch_size]))
+        self.d_loss_real = tf.reduce_mean(d_loss_real)
+        
+        d_loss_fake = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.d_loss_fake = tf.reduce_mean(d_loss_fake)
+        
+        self.d_loss = self.dloss_real + self.d_loss_fake
         
     def generator(self, inputs, training=False):
         '''
@@ -123,31 +147,9 @@ class DCGAN:
         self.reuse = True
         self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
         return outputs
+         
         
-    def loss(self, train_data):
-        '''
-        build models, calculate losses
-        '''
-        # get models
-        generated = self.g(self.z , training=True)
-        g_outputs = discriminator(generated, training=True)
-        d_outputs = self.d(traindata, training=True)
-        
-        # Softmax cross entropy loss
-        g_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
-        self.g_loss = tf.reduce_mean(g_loss)
-        
-        d_loss_real = tf.nn.softmax_cross_entropy_with_logits_v2(logits=t_outputs, labels=tf.ones([self.batch_size]))
-        self.d_loss_real = tf.reduce_mean(d_loss_real)
-        
-        d_loss_fake = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
-        self.d_loss_fake = tf.reduce_mean(d_loss_fake)
-        
-        self.d_loss = self.dloss_real + self.d_loss_fake
-        
-                                                         
-        
-    def train(self, images, epochs=2, batch_size=245, learning_rate=0.0002, beta1=0.5):
+    def train(self, epochs=2, batch_size=245, learning_rate=0.0002, beta1=0.5):
         '''
         Input Args:
         batches - batches of images for training
@@ -168,7 +170,7 @@ class DCGAN:
         counter = 1
         start_time = time.time()
         
-        
+        '''
         # For loading a checkpoint
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
         if could_load:
@@ -176,7 +178,7 @@ class DCGAN:
           print(" [*] Load SUCCESS")
         else:
           print(" [!] Load failed...")
-        
+        '''
         # run
         with tf.Session() as sess:
             sess.run(init)
@@ -186,8 +188,62 @@ class DCGAN:
             batches = get_batches(batch_size, self.dataset)
             
             
-            for e in range(epoch):
+            for e in range(epoch):                
                 for i in range(iters):
+                    #get batch
+                    batch_images = next(batches)
+                    
+                    batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
+                    
+                    #_, g_loss_value, d_loss_value = sess.run([train_op, losses[self.g], losses[self.d]])
+                    
+                    # ---> Run g_optim twice to make sure that d_loss does not go to zero?
+                    # Update D network
+                    _, summary_str = self.sess.run([d_optim, self.d_sum], feed_dict={ self.inputs: batch_images, self.z: batch_z })
+                    self.writer.add_summary(summary_str, counter)
+
+                    # Update G network
+                    _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={ self.z: batch_z })
+                    self.writer.add_summary(summary_str, counter)
+
+                    # ---> Run g_optim twice to make sure that d_loss does not go to zero (different from paper)?
+                    '''
+                    _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={ self.z: batch_z })
+                    self.writer.add_summary(summary_str, counter)
+                    '''
+                
+                    errD_fake = self.d_loss_fake.eval({ self.z: batch_z })
+                    errD_real = self.d_loss_real.eval({ self.inputs: batch_images })
+                    errG = self.g_loss.eval({self.z: batch_z})
+
+                    counter += 1
+                    print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
+                      % (epoch, config.epoch, idx, batch_idxs,
+                        time.time() - start_time, errD_fake+errD_real, errG))
+
+                    '''
+                    if np.mod(counter, 100) == 1:
+                        try:
+                            samples, d_loss, g_loss = self.sess.run([self.sampler, self.d_loss, self.g_loss],
+                            feed_dict={
+                                self.z: sample_z,
+                                self.inputs: sample_inputs,
+                            },
+                            )
+                            save_images(samples, image_manifold_size(samples.shape[0]),
+                                './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                            print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
+                        except:
+                            print("one pic error!...")
+                    '''
+                    
+                    # Save checkpoint
+                    if np.mod(counter, 500) == 2:
+                        self.save(config.checkpoint_dir, counter)
+                    
+                    
+                    
+                    #######################
                     batch_xs, batch_ys = X_train[i*batch_size:(i+1)*batch_size], y_train[i*batch_size:(i+1)*batch_size]
                     sess.run(train_step, feed_dict={x_tf: batch_xs, y_tf: batch_ys})
                 val_acc = sess.run(accuracy, feed_dict={x_tf: X_val, y_tf: y_val})
