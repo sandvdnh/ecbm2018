@@ -43,32 +43,7 @@ class DCGAN:
         self.build_model()
         
     
-    def build_model(self):
-        '''
-        build model, calculate losses
-        '''
-        # prep values to build model
-        image_dims = [self.input_height, self.input_width, self.c_dim]
-        self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
-        
-        self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-        
-        # build models
-        generated = generator(self.z , training=True)
-        g_outputs = discriminator(generated, training=True)
-        d_outputs = discriminator(traindata, training=True)
-        
-        # Softmax cross entropy loss
-        g_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
-        self.g_loss = tf.reduce_mean(g_loss)
-        
-        d_loss_real = tf.nn.softmax_cross_entropy_with_logits_v2(logits=t_outputs, labels=tf.ones([self.batch_size]))
-        self.d_loss_real = tf.reduce_mean(d_loss_real)
-        
-        d_loss_fake = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
-        self.d_loss_fake = tf.reduce_mean(d_loss_fake)
-        
-        self.d_loss = self.dloss_real + self.d_loss_fake
+    
         
     def generator(self, inputs, training=False):
         '''
@@ -81,7 +56,7 @@ class DCGAN:
         
         '''
         
-        with tf.variable_scope('generator'):
+        with tf.variable_scope('generator', reuse=True):
             #reshape from inputs
             reshape_out = tf.layers.dense(inputs, self.g_dim[0] * self.s_size * self.s_size)
             reshape_out = tf.reshape(reshape_out, [-1, self.s_size, self.s_size, self.g_dim[0]])
@@ -92,11 +67,11 @@ class DCGAN:
             conv_1 = tf.nn.relu(tf.layers.batch_normalization(conv_1, training=training), name='outputs')
             
             # deconv layer 2
-            conv2 = tf.layers.conv2d_transpose(conv_1, self.g_dim[2], [5, 5], strides=(2, 2), padding='SAME')
+            conv_2 = tf.layers.conv2d_transpose(conv_1, self.g_dim[2], [5, 5], strides=(2, 2), padding='SAME')
             conv_2 = tf.nn.relu(tf.layers.batch_normalization(conv_2, training=training), name='outputs')
             
             # deconv layer 3
-            conv3 = tf.layers.conv2d_transpose(conv_2, self.g_dim[3], [5, 5], strides=(2, 2), padding='SAME')
+            conv_3 = tf.layers.conv2d_transpose(conv_2, self.g_dim[3], [5, 5], strides=(2, 2), padding='SAME')
             conv_3 = tf.nn.relu(tf.layers.batch_normalization(conv_3, training=training), name='outputs')
             
             # deconv layer 4
@@ -148,7 +123,33 @@ class DCGAN:
         self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
         return outputs
          
+    def build_model(self):
+        '''
+        build model, calculate losses
+        '''
+        # prep values to build model
+        image_dims = [self.input_height, self.input_width, 3]
+        self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
+        inputs = self.inputs # tensor of shape [batch, height, width, channels]
         
+        # build models
+        generated = self.generator(self.z , training=True)
+        g_outputs = self.discriminator(generated, training=True)
+        d_outputs = self.discriminator(inputs, training=True)
+        
+        # Softmax cross entropy loss
+        g_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.g_loss = tf.reduce_mean(g_loss)
+        
+        d_loss_real = tf.nn.softmax_cross_entropy_with_logits_v2(logits=t_outputs, labels=tf.ones([self.batch_size]))
+        self.d_loss_real = tf.reduce_mean(d_loss_real)
+        
+        d_loss_fake = tf.nn.softmax_cross_entropy_with_logits_v2(logits=g_outputs, labels=tf.zeros([self.batch_size]))
+        self.d_loss_fake = tf.reduce_mean(d_loss_fake)
+        
+        self.d_loss = self.dloss_real + self.d_loss_fake
+        
+    
     def train(self, epochs=2, batch_size=245, learning_rate=0.0002, beta1=0.5):
         '''
         Input Args:
