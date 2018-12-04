@@ -22,6 +22,7 @@ def block_mask(data,block_size):
 #
 #Output:
 #masked_data: M x M x 3 xN numpy array with central block set to 0
+#mask: set of masks
 ############################################################################################
 
 	import numpy as np
@@ -52,7 +53,7 @@ def block_mask(data,block_size):
 		mask = np.tile(mask,N)
 		masked_data = np.multiply(data,mask)
 
-	return masked_data
+	return masked_data, mask
 
 
 
@@ -74,6 +75,7 @@ def random_mask(data,percent):
 #
 #Output:
 #masked_data: M x M x 3 x N numpy array with random values set to 0 based on set percentage
+#mask: set of masks
 ############################################################################################
 
 	import numpy as np
@@ -84,14 +86,15 @@ def random_mask(data,percent):
 
 	#create masked_data array
 	masked_data = np.zeros((M,M,3,N))
+	mask = np.zeros((M,M,3,N))
 	#set
 	for i in range(N):
-		mask = np.random.binomial(1,1-percent,(M,M,1))
-		mask = np.tile(mask,3)
-		masked_data[:,:,:,i] = np.multiply(data[:,:,:,i],mask)
+		next_mask = np.random.binomial(1,1-percent,(M,M,1))
+		mask[:,:,:,i] = np.tile(next_mask,3)
+		masked_data[:,:,:,i] = np.multiply(data[:,:,:,i],mask[:,:,:,i])
 
-	#masked_data = masked_data.astype(int) 
-	return masked_data
+	 
+	return masked_data, mask
 
 
 def half_missing_mask(data):
@@ -101,8 +104,9 @@ def half_missing_mask(data):
 #Input Arguments:
 #data: M x M x 3 x N numpy array of sqaure RGB images
 #Output:
-#masked_dataL M x M x 3 x M numpy array with half of each image blacked out either vertically
+#masked_data: M x M x 3 x M numpy array with half of each image blacked out either vertically
 #or horizontally
+#masks: set of masks
 ############################################################################################
 	import numpy as np
 
@@ -111,15 +115,22 @@ def half_missing_mask(data):
 	N = data.shape[3]
 
 	masked_data = np.zeros((M,M,3,N))
+	mask = np.zeros((M,M,3,N))
 
 	for i in range(N):
 		if np.random.rand(1) > 0.5:
-			mask = np.ones((M,M,3))
-			mask[0:M , 0: int(np.ceil(M/2)),0:3] = 0
-			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i], mask)
+			next_mask = np.ones((M,M,3))
+			next_mask[0:M , 0: int(np.ceil(M/2)),0:3] = 0
+			mask[:,:,:,i] = next_mask
+			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i], mask[:,:,:,i])
 		else:
-			mask = np.ones((M,M,3))
-			mask[0: int(np.ceil(M/2)), 0: M ,0:3] = 0
-			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i] , mask)
+			next_mask = np.ones((M,M,3))
+			next_mask[0: int(np.ceil(M/2)), 0: M ,0:3] = 0
+			mask[:,:,:,i] = next_mask
+			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i] , mask[:,:,:,i])
 
+<<<<<<< HEAD
+	return masked_data, mask
+=======
 	return masked_data
+>>>>>>> 7ba25f6528dfbe339ec3134e60ff5bd45cc7bb53
