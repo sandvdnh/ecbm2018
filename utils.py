@@ -1,5 +1,13 @@
+import numpy as np
 
-
+def crop(image, cropx = 64, cropy = 64):
+    '''
+    crops an image
+    '''
+    y, x, _ = image.shape
+    startx = x // 2 - (cropx // 2)
+    starty = y // 2 - (cropy // 2)
+    return image[ starty : starty + cropy, startx : startx + cropx, :]
 
 def block_mask(data,block_size):
 ############################################################################################

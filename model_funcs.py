@@ -1,7 +1,12 @@
 # This python script contains various functions for building a DCGAN
-
+from os import listdir
+from os.path import isfile, join
 import numpy as np 
 import tensorflow as tf
+import matplotlib.pyplot as plt
+from scipy.io import loadmat
+from scipy.misc import imresize
+from utils import crop
 
 try:
     merge_summary = tf.merge_summary    
@@ -12,12 +17,17 @@ def leaky_relu(x, leak=0.2, name=''):
     #leaky Relu returns max of x and x*leak
     return tf.math.maximum(x, x * leak, name=name)
 
+
 def get_batches(batch_size, dataset):
     '''
     Yields the correct iterator for each dataset.
     '''
     if dataset == 'svhn':
         return get_batches_svhn(batch_size)
+    elif dataset == 'celeba':
+        return get_batches_celeba(batch_size)
+    elif dataset == 'cars':
+        return get_batches_cars(batch_size)
     else: 
         print('I do not know this dataset!')
 
@@ -69,21 +79,27 @@ def get_batches_celeba(batch_size):
     '''
     Returns iterator for celebs dataset
     Expects data files to be located in ./datasets/img_align_celeba/
-    NOT YET WORKING
     '''
-    filenames = []
     path = './datasets/img_align_celeba/'
-    #for i in range(len(listdir(path))):
-    for i in range(10):
-        filenames += [f for f in listdir(path) if isfile(join(path, f))]
-        x = np.expand_dims(plt.imread(path + filenames[i]), 0).astype(np.float32)
-        print(x.shape)
-    return 0
+    filenames = []
+    filenames += [f for f in listdir(path) if isfile(join(path, f))]
+    n = len(filenames)
+    n_batches = int(n / batch_size)
+    while True:
+        for i in range(n_batches):
+            batch = np.zeros((batch_size, 64, 64, 3))
+            for j in range(batch_size):
+                x = plt.imread(path + filenames[i * batch_size + j])
+                x = imresize(x, 60) / 255
+                x = crop(x)
+                x = 2 * x - 1
+                batch[j] = x.copy()
+            yield batch
+
 
 # Simple example on how to use this
 if __name__ == '__main__':
-    my_iterator = get_batches(10, dataset = 'svhn')
+    my_iterator = get_batches(10, dataset = 'celeba')
     for i in range(3):
         images = next(my_iterator)
-        print(images.shape)
 
