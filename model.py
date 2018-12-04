@@ -33,6 +33,10 @@ class DCGAN:
         self.d_dim = [3] + d_dim
 
         self.s_size = s_size
+        
+        self.loss()
+        self.generator()
+        self.saver = tf.train.Saver()
 
         
     def generator(self, inputs, training=):
@@ -113,7 +117,7 @@ class DCGAN:
         self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
         return outputs
         
-    def loss():
+    def loss(self):
         '''
         Calculating loss based on 
         '''
@@ -126,7 +130,7 @@ class DCGAN:
         self.loss = tf.reduce_mean(loss)
         
         
-    def train(self, batches, max_count, save_every_n):
+    def train(self, batches, learning_rate=0.0002, beta1=0.5):
         '''
         Input Args:
         batches - 
@@ -139,23 +143,52 @@ class DCGAN:
         
         # using Adam optimizer as specified in the project paper
         d_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1) #generator optimizer
-        g_optim = tf.train.AdamOptimizer(learning_rate) # discriminator optimizer
+        g_optim = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1) # discriminator optimizer
         
+        tf.global_variables_initializer().run()
         
+        counter = 1
+        start_time = time.time()
+        
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        if could_load:
+          counter = checkpoint_counter
+          print(" [*] Load SUCCESS")
+        else:
+          print(" [!] Load failed...")
+        
+        # learning variables
+        num_train = 49000
+        batch_size = 250
+        num_batch = num_train//batch_size
+        # run
+        with tf.Session() as sess:
+            sess.run(init)
+            for e in range(20):
+                for i in range(num_batch):
+                    batch_xs, batch_ys = X_train[i*batch_size:(i+1)*batch_size], y_train[i*batch_size:(i+1)*batch_size]
+                    sess.run(train_step, feed_dict={x_tf: batch_xs, y_tf: batch_ys})
+                val_acc = sess.run(accuracy, feed_dict={x_tf: X_val, y_tf: y_val})
+                print('epoch {}: valid acc = {}'.format(e+1, val_acc))
+            # get test accuracy
+            test_acc = sess.run(accuracy, feed_dict={x_tf: X_val, y_tf: y_val})
+            print('test acc = {}'.format(test_acc))
+        
+        '''
         self.session = tf.Session()
         with self.session as sess:
             sess.run(tf.global_variables_initializer())
             counter = 0
             new_state = sess.run(self.initial_state)
             # Train network
-            for x, y in batches:
+            for x in batches:
                 counter += 1
                 start = time.time()
                 feed = {self.inputs: x,
                         self.targets: y,
                         self.keep_prob: self.train_keep_prob,
                         self.initial_state: new_state}
-                batch_loss, new_state, _ = sess.run([self.loss, 
+                _, g_loss_value , d_loss_value = sess.run([self.loss, 
                                                      self.final_state, 
                                                      self.optimizer], 
                                                      feed_dict=feed)
@@ -167,12 +200,12 @@ class DCGAN:
                           '{:.4f} sec/batch'.format((end-start)))
                     
                 if (counter % save_every_n == 0):
-                    self.saver.save(sess, "checkpoints/i{}_l{}.ckpt".format(counter, self.rnn_size))
+                    self.saver.save(sess, "checkpoints/i{}_l{}.ckpt".format(counter, self.s_size))
                     
                 if counter >= max_count:
                     break
             
-            self.saver.save(sess, "checkpoints/i{}_l{}.ckpt".format(counter, self.rnn_size))
-        
+            self.saver.save(sess, "checkpoints/i{}_l{}.ckpt".format(counter, self.s_size))
+        '''
         
         
