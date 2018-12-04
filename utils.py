@@ -1,5 +1,13 @@
+import numpy as np
 
-
+def crop(image, cropx = 64, cropy = 64):
+    '''
+    crops an image
+    '''
+    y, x, _ = image.shape
+    startx = x // 2 - (cropx // 2)
+    starty = y // 2 - (cropy // 2)
+    return image[ starty : starty + cropy, startx : startx + cropx, :]
 
 def block_mask(data,block_size):
 ############################################################################################
@@ -121,4 +129,8 @@ def half_missing_mask(data):
 			mask[:,:,:,i] = next_mask
 			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i] , mask[:,:,:,i])
 
+<<<<<<< HEAD
 	return masked_data, mask
+=======
+	return masked_data
+>>>>>>> 7ba25f6528dfbe339ec3134e60ff5bd45cc7bb53
