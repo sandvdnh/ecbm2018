@@ -15,7 +15,8 @@ except:
 
 def leaky_relu(x, leak=0.2, name=''):
     #leaky Relu returns max of x and x*leak
-    return tf.math.maximum(x, x * leak, name=name)
+    return tf.maximum(x, x * leak, name=name)
+
 
 
 def get_batches(batch_size, dataset):
