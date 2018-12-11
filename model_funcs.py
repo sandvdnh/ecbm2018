@@ -38,7 +38,7 @@ def get_batches(batch_size, dataset):
         print('I do not know this dataset!')
 
 
-def get_batches_svhn(batch_size, load = False):
+def get_batches_svhn(batch_size):
     '''
     Loads svhn dataset and returns iterator.
 
