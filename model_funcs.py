@@ -52,7 +52,7 @@ def get_batches_svhn(batch_size):
             'test_32x32.mat'
             ]
     url = 'http://ufldl.stanford.edu/housenumbers/'
-    directory = './datasets/'
+    directory = 'datasets'
     files = list(glob.glob(os.path.join(directory,'*.*')))
     #print(os.path.join(directory, filenames[0]))
     for file_ in filenames:
@@ -69,7 +69,6 @@ def get_batches_svhn(batch_size):
     X_train = np.rollaxis(loaded['X'], 3)
     training_data = np.zeros((73257, 64, 64, 3))
     for i in range(X_train.shape[0]):
-        print(i)
         training_data[i, :, :, :] = 2 * imresize(X_train[i], (64, 64, 3)) / 255 - 1
     # rescale each image to have pixel values in [-1, 1]
     #training_data = 2 * training_data - 1
@@ -78,7 +77,6 @@ def get_batches_svhn(batch_size):
     X_test = np.rollaxis(loaded['X'], 3)
     testing_data = np.zeros((26032, 64, 64, 3))
     for i in range(X_test.shape[0]):
-        print(i)
         testing_data[i, :, :, :] = 2 * imresize(X_test[i], (64, 64, 3)) / 255 - 1
     # rescale each image to have pixel values in [-1, 1]
     #testing_data = 2 * testing_data - 1
@@ -86,11 +84,9 @@ def get_batches_svhn(batch_size):
     # create batches
     n = training_data.shape[0]
     n_batches = int(n / batch_size)
-    print('done')
     while True:
         for i in range(n_batches):
             batch = training_data[i * batch_size : (i + 1) * batch_size]
-            print('yielding batch')
             yield batch
 
 
@@ -99,7 +95,7 @@ def get_batches_celeba(batch_size):
     Returns iterator for celebs dataset
     Expects data files to be located in ./datasets/img_align_celeba/
     '''
-    directory = './datasets/'
+    directory = 'datasets'
     list_dirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory, o))]
     filenames = [
             'img_align_celeba.zip',
@@ -118,7 +114,7 @@ def get_batches_celeba(batch_size):
     else:
         print('Dataset already present!')
 
-    path = './datasets/img_align_celeba/'
+    path = os.path.join('datasets', 'img_align_celeba')
     filenames = []
     filenames += [f for f in listdir(path) if isfile(join(path, f))]
     n = len(filenames)
@@ -146,7 +142,7 @@ def get_batches_cars(batch_size):
             'car_devkit.tgz'
             ]
     url = 'http://imagenet.stanford.edu/internal/car196/'
-    directory = './datasets/'
+    directory = 'datasets'
     files = list(glob.glob(os.path.join(directory,'*.*')))
     for file_ in filenames[:-1]:
         if os.path.join(directory, file_) not in files:
@@ -176,13 +172,15 @@ def get_batches_cars(batch_size):
         tar.extractall(path = directory)
         tar.close()
 
-    path = './datasets/cars_train/'
+    #path = './datasets/cars_train/'
+    path = os.path.join('datasets', 'cars_train')
     filenames = []
     filenames += [f for f in listdir(path) if isfile(join(path, f))]
     n = len(filenames)
     n_batches = int(n / batch_size)
     counter = 0
-    bounding_boxes_ = loadmat('./datasets/devkit/cars_train_annos.mat')['annotations'][0]
+    path_ = os.path.join('datasets', 'devkit', 'cars_train_annos.mat')
+    bounding_boxes_ = loadmat(path_)['annotations'][0]
     bounding_boxes = np.zeros((n, 4), dtype = np.uint)
 
     for i in range(len(bounding_boxes_)):
@@ -216,6 +214,6 @@ def get_batches_cars(batch_size):
 
 # Simple example on how to use this
 if __name__ == '__main__':
-    my_iterator, _ = get_batches(10, dataset = 'svhn')
+    my_iterator, _ = get_batches(10, dataset = 'cars')
     for i in range(3):
         images = next(my_iterator)
