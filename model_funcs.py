@@ -1,4 +1,9 @@
 # This python script contains various functions for building a DCGAN
+import glob
+import zipfile
+import tarfile
+from urllib import request
+import os
 from os import listdir
 from os.path import isfile, join
 import numpy as np 
@@ -43,29 +48,39 @@ def get_batches_svhn(batch_size, load = False):
 
     When first running this function, set load = True such that resized 64x64 images are saved to .npy files.
     '''
-    if load:
-        # Load data from .mat files, resize to 64x64
-        loaded = loadmat('./datasets/train_32x32.mat')
-        X_train = np.rollaxis(loaded['X'], 3)
-        training_data = np.zeros((73257, 64, 64, 3))
-        for i in range(X_train.shape[0]):
-            training_data[i, :, :, :] = imresize(X_train[i], (64, 64, 3)) / 255
-        # rescale each image to have pixel values in [-1, 1]
-        training_data = 2 * training_data - 1
-        np.save('./datasets/training_data.npy', training_data)
-        
-        loaded = loadmat('./datasets/test_32x32.mat')
-        X_test = np.rollaxis(loaded['X'], 3)
-        testing_data = np.zeros((26032, 64, 64, 3))
-        for i in range(X_test.shape[0]):
-            testing_data[i, :, :, :] = imresize(X_test[i], (64, 64, 3)) / 255
-        # rescale each image to have pixel values in [-1, 1]
-        testing_data = 2 * testing_data - 1
-        np.save('./datasets/testing_data.npy', testing_data)
+    filenames = [
+            'train_32x32.mat',
+            'test_32x32.mat'
+            ]
+    url = 'http://ufldl.stanford.edu/housenumbers/'
+    directory = './datasets/'
+    files = list(glob.glob(os.path.join(directory,'*.*')))
+    for file_ in filenames:
+        if directory + file_ not in files:
+            print('Downloading ', file_)
+            request.urlretrieve(
+                    url + file_,
+                    directory + file_
+                    )
 
-    else:
-        #testing_data = np.load('./datasets/testing_data.npy')
-        training_data = np.load('./datasets/training_data.npy')
+    # Load data from .mat files, resize to 64x64
+    loaded = loadmat('./datasets/train_32x32.mat')
+    X_train = np.rollaxis(loaded['X'], 3)
+    training_data = np.zeros((73257, 64, 64, 3))
+    for i in range(X_train.shape[0]):
+        training_data[i, :, :, :] = imresize(X_train[i], (64, 64, 3)) / 255
+    # rescale each image to have pixel values in [-1, 1]
+    training_data = 2 * training_data - 1
+    np.save('./datasets/training_data.npy', training_data)
+
+    loaded = loadmat('./datasets/test_32x32.mat')
+    X_test = np.rollaxis(loaded['X'], 3)
+    testing_data = np.zeros((26032, 64, 64, 3))
+    for i in range(X_test.shape[0]):
+        testing_data[i, :, :, :] = imresize(X_test[i], (64, 64, 3)) / 255
+    # rescale each image to have pixel values in [-1, 1]
+    testing_data = 2 * testing_data - 1
+    np.save('./datasets/testing_data.npy', testing_data)
 
     # create batches
     n = training_data.shape[0]
@@ -81,6 +96,25 @@ def get_batches_celeba(batch_size):
     Returns iterator for celebs dataset
     Expects data files to be located in ./datasets/img_align_celeba/
     '''
+    directory = './datasets/'
+    list_dirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory, o))]
+    filenames = [
+            'img_align_celeba.zip',
+            ]
+    url = 'https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing'
+    files = list(glob.glob(os.path.join(directory,'*.*')))
+    if directory + 'img_align_celeba' not in list_dirs:
+        for file_ in filenames:
+            if directory + file_ not in files:
+                print('Dataset not found; download .zip file from')
+                print(url)
+                print('and extract to ./datasets/img_align_celeba/*')
+                return 0
+            else:
+                print('Extract .zip file to ./datasets/img_align_celeba/*')
+    else:
+        print('Dataset already present!')
+
     path = './datasets/img_align_celeba/'
     filenames = []
     filenames += [f for f in listdir(path) if isfile(join(path, f))]
@@ -103,13 +137,49 @@ def get_batches_cars(batch_size):
     returns iterator for the cars dataset
     Expects data files to be located in ./dataset/cars_train/
     '''
+    filenames = [
+            'cars_test.tgz',
+            'cars_train.tgz',
+            'car_devkit.tgz'
+            ]
+    url = 'http://imagenet.stanford.edu/internal/car196/'
+    directory = './datasets/'
+    files = list(glob.glob(os.path.join(directory,'*.*')))
+    for file_ in filenames[:-1]:
+        if directory + file_ not in files:
+            print('Downloading ', file_)
+            request.urlretrieve(
+                    url + file_,
+                    directory + file_
+                    )
+    if directory + filenames[-1] not in files:
+        print('Downloading ', filenames[-1])
+        url = 'https://ai.stanford.edu/~jkrause/cars/car_devkit.tgz'
+        request.urlretrieve(
+                url,
+                directory + filenames[-1]
+                )
+
+    list_dirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory, o))]
+    for file_ in filenames[:-1]:
+        if directory + file_[:-4] not in list_dirs:
+            print('Extracting ', file_)
+            tar = tarfile.open(directory + file_, "r:gz")
+            tar.extractall(path = directory)
+            tar.close()
+    if directory + 'devkit' not in list_dirs:
+        print('Extracting ', filenames[-1])
+        tar = tarfile.open(directory + filenames[-1], "r:gz")
+        tar.extractall(path = directory)
+        tar.close()
+
     path = './datasets/cars_train/'
     filenames = []
     filenames += [f for f in listdir(path) if isfile(join(path, f))]
     n = len(filenames)
     n_batches = int(n / batch_size)
     counter = 0
-    bounding_boxes_ = loadmat('./datasets/cars_train_annos.mat')['annotations'][0]
+    bounding_boxes_ = loadmat('./datasets/devkit/cars_train_annos.mat')['annotations'][0]
     bounding_boxes = np.zeros((n, 4), dtype = np.uint)
 
     for i in range(len(bounding_boxes_)):
