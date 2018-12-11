@@ -31,9 +31,9 @@ def get_batches(batch_size, dataset):
     if dataset == 'svhn':
         return get_batches_svhn(batch_size), int(73257 / batch_size)
     elif dataset == 'celeba':
-        return get_batches_celeba(batch_size)
+        return get_batches_celeba(batch_size), int(202600 / batch_size)
     elif dataset == 'cars':
-        return get_batches_cars(batch_size)
+        return get_batches_cars(batch_size), int(8144 / batch_size)
     else: 
         print('I do not know this dataset!')
 
@@ -123,7 +123,7 @@ def get_batches_celeba(batch_size):
         for i in range(n_batches):
             batch = np.zeros((batch_size, 64, 64, 3))
             for j in range(batch_size):
-                x = plt.imread(path + filenames[i * batch_size + j])
+                x = plt.imread(os.path.join(path, filenames[i * batch_size + j]))
                 x = imresize(x, 60) / 255
                 x = crop(x)
                 x = 2 * x - 1
@@ -135,6 +135,7 @@ def get_batches_cars(batch_size):
     '''
     returns iterator for the cars dataset
     Expects data files to be located in ./dataset/cars_train/
+    8144 training images
     '''
     filenames = [
             'cars_test.tgz',
@@ -195,7 +196,7 @@ def get_batches_cars(batch_size):
         for i in range(n_batches):
             batch = np.zeros((batch_size, 64, 64, 3))
             for j in range(batch_size):
-                x = plt.imread(path + filenames[i * batch_size + j])
+                x = plt.imread(os.path.join(path, filenames[i * batch_size + j]))
                 if len(x.shape) == 2:
                     x = np.repeat(np.reshape(x, (*x.shape, 1)), 3, axis = 2)
                 x_total, y_total = x.shape[:2]
@@ -214,6 +215,6 @@ def get_batches_cars(batch_size):
 
 # Simple example on how to use this
 if __name__ == '__main__':
-    my_iterator, _ = get_batches(10, dataset = 'cars')
+    my_iterator, _ = get_batches(10, dataset = 'celeba')
     for i in range(3):
         images = next(my_iterator)
