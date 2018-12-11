@@ -128,9 +128,3 @@ def half_missing_mask(data):
 			next_mask[0: int(np.ceil(M/2)), 0: M ,0:3] = 0
 			mask[:,:,:,i] = next_mask
 			masked_data[:,:,:,i] = np.multiply(data[:,:,:,i] , mask[:,:,:,i])
-
-<<<<<<< HEAD
-	return masked_data, mask
-=======
-	return masked_data
->>>>>>> 7ba25f6528dfbe339ec3134e60ff5bd45cc7bb53
