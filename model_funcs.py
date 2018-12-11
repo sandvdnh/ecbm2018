@@ -29,7 +29,7 @@ def get_batches(batch_size, dataset):
     Yields the correct iterator for each dataset.
     '''
     if dataset == 'svhn':
-        return get_batches_svhn(batch_size)
+        return get_batches_svhn(batch_size), int(73257 / batch_size)
     elif dataset == 'celeba':
         return get_batches_celeba(batch_size)
     elif dataset == 'cars':
