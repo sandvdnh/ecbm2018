@@ -203,10 +203,11 @@ class DCGAN:
             
         #generate batches based on which dataset is being used
         #if self.data_set == '': --> uncomment if needed
-        batches = get_batches(batch_size, self.dataset)
+        print("loading data.... ")
+        batches, iters = get_batches(batch_size, self.dataset)
         
         # getting number of training iterations
-        iters = 1000
+        # iters = 1000
         print('number of batches for training: {}'.format(iters))
 
         for epoch in range(epochs):
