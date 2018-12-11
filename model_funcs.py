@@ -45,8 +45,7 @@ def get_batches_svhn(batch_size):
     The function expects two data files to be present in ./datasets/:
     - train_32x32.mat (73257 images)
     - test_32x32.mat (26032 images)
-
-    When first running this function, set load = True such that resized 64x64 images are saved to .npy files.
+    If these are not present, they are downloaded automatically
     '''
     filenames = [
             'train_32x32.mat',
@@ -55,39 +54,43 @@ def get_batches_svhn(batch_size):
     url = 'http://ufldl.stanford.edu/housenumbers/'
     directory = './datasets/'
     files = list(glob.glob(os.path.join(directory,'*.*')))
+    #print(os.path.join(directory, filenames[0]))
     for file_ in filenames:
-        if directory + file_ not in files:
+        if os.path.join(directory, file_) not in files:
             print('Downloading ', file_)
             request.urlretrieve(
                     url + file_,
-                    directory + file_
+                    os.path.join(directory, file_)
                     )
+    print('Data downloaded, preprocessing...')
 
     # Load data from .mat files, resize to 64x64
     loaded = loadmat('./datasets/train_32x32.mat')
     X_train = np.rollaxis(loaded['X'], 3)
     training_data = np.zeros((73257, 64, 64, 3))
     for i in range(X_train.shape[0]):
-        training_data[i, :, :, :] = imresize(X_train[i], (64, 64, 3)) / 255
+        print(i)
+        training_data[i, :, :, :] = 2 * imresize(X_train[i], (64, 64, 3)) / 255 - 1
     # rescale each image to have pixel values in [-1, 1]
-    training_data = 2 * training_data - 1
-    np.save('./datasets/training_data.npy', training_data)
+    #training_data = 2 * training_data - 1
 
     loaded = loadmat('./datasets/test_32x32.mat')
     X_test = np.rollaxis(loaded['X'], 3)
     testing_data = np.zeros((26032, 64, 64, 3))
     for i in range(X_test.shape[0]):
-        testing_data[i, :, :, :] = imresize(X_test[i], (64, 64, 3)) / 255
+        print(i)
+        testing_data[i, :, :, :] = 2 * imresize(X_test[i], (64, 64, 3)) / 255 - 1
     # rescale each image to have pixel values in [-1, 1]
-    testing_data = 2 * testing_data - 1
-    np.save('./datasets/testing_data.npy', testing_data)
+    #testing_data = 2 * testing_data - 1
 
     # create batches
     n = training_data.shape[0]
     n_batches = int(n / batch_size)
+    print('done')
     while True:
         for i in range(n_batches):
             batch = training_data[i * batch_size : (i + 1) * batch_size]
+            print('yielding batch')
             yield batch
 
 
@@ -103,9 +106,9 @@ def get_batches_celeba(batch_size):
             ]
     url = 'https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing'
     files = list(glob.glob(os.path.join(directory,'*.*')))
-    if directory + 'img_align_celeba' not in list_dirs:
+    if os.path.join(directory, 'img_align_celeba') not in list_dirs:
         for file_ in filenames:
-            if directory + file_ not in files:
+            if os.path.join(directory, file_) not in files:
                 print('Dataset not found; download .zip file from')
                 print(url)
                 print('and extract to ./datasets/img_align_celeba/*')
@@ -146,30 +149,30 @@ def get_batches_cars(batch_size):
     directory = './datasets/'
     files = list(glob.glob(os.path.join(directory,'*.*')))
     for file_ in filenames[:-1]:
-        if directory + file_ not in files:
+        if os.path.join(directory, file_) not in files:
             print('Downloading ', file_)
             request.urlretrieve(
                     url + file_,
-                    directory + file_
+                    os.path.join(directory, file_)
                     )
-    if directory + filenames[-1] not in files:
+    if os.path.join(directory, filenames[-1]) not in files:
         print('Downloading ', filenames[-1])
         url = 'https://ai.stanford.edu/~jkrause/cars/car_devkit.tgz'
         request.urlretrieve(
                 url,
-                directory + filenames[-1]
+                os.path.join(directory, filenames[-1])
                 )
 
     list_dirs = [os.path.join(directory, o) for o in os.listdir(directory) if os.path.isdir(os.path.join(directory, o))]
     for file_ in filenames[:-1]:
-        if directory + file_[:-4] not in list_dirs:
+        if os.path.join(directory, file_[:-4]) not in list_dirs:
             print('Extracting ', file_)
             tar = tarfile.open(directory + file_, "r:gz")
             tar.extractall(path = directory)
             tar.close()
-    if directory + 'devkit' not in list_dirs:
+    if os.path.join(directory, 'devkit') not in list_dirs:
         print('Extracting ', filenames[-1])
-        tar = tarfile.open(directory + filenames[-1], "r:gz")
+        tar = tarfile.open(os.path.join(directory, filenames[-1]), "r:gz")
         tar.extractall(path = directory)
         tar.close()
 
@@ -213,8 +216,6 @@ def get_batches_cars(batch_size):
 
 # Simple example on how to use this
 if __name__ == '__main__':
-    my_iterator = get_batches(10, dataset = 'cars')
+    my_iterator, _ = get_batches(10, dataset = 'svhn')
     for i in range(3):
         images = next(my_iterator)
-
-
