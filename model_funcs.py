@@ -47,7 +47,7 @@ def get_batches(batch_size, dataset):
     if dataset == 'svhn':
         return get_batches_svhn(batch_size), int(73257 / batch_size)
     elif dataset == 'celeba':
-        return get_batches_celeba(batch_size), int(202600 / batch_size)
+        return get_batches_celeba(batch_size, use_preprocessed = True, preprocessed = True), int(202600 / batch_size)
     elif dataset == 'cars':
         return get_batches_cars(batch_size), int(8144 / batch_size)
     else: 
