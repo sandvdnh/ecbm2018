@@ -417,7 +417,7 @@ Initializing a new one.
         with tf.variable_scope("generator") as scope:
             self.z_, self.h0_w, self.h0_b = linear(z, self.gf_dim*8*4*4, 'g_h0_lin', with_w=True)
     
-            # TODO: Nicer iteration pattern here. #readability
+            ## TODO: Nicer iteration pattern here. #readability
             hs = [None]
             hs[0] = tf.reshape(self.z_, [-1, 4, 4, self.gf_dim * 8])
             hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
