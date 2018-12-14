@@ -141,9 +141,9 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
 
     def train(self, config):
-        data = dataset_files(config.dataset)
-        np.random.shuffle(data)
-        assert(len(data) > 0)
+        #data = dataset_files(config.dataset)
+        #np.random.shuffle(data)
+        #assert(len(data) > 0)
 
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d_loss, var_list=self.d_vars)
@@ -161,10 +161,10 @@ class DCGAN(object):
         self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , self.z_dim))
-        sample_files = data[0:self.sample_size]
+        #sample_files = data[0:self.sample_size]
 
-        sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
-        sample_images = np.array(sample).astype(np.float32)
+        #sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
+        #sample_images = np.array(sample).astype(np.float32)
 
         counter = 1
         start_time = time.time()
@@ -191,17 +191,18 @@ Initializing a new one.
 ======
 
 """)
-        #batches, batch_idxs = get_batches(self.batch_size, 'celeba')
+        batches, batch_idxs = get_batches(self.batch_size, 'celeba')
 
         for epoch in range(config.epoch):
-            data = dataset_files(config.dataset)
-            batch_idxs = min(len(data), config.train_size) // self.batch_size
+            #data = dataset_files(config.dataset)
+            #batch_idxs = min(len(data), config.train_size) // self.batch_size
 
             for idx in range(0, batch_idxs):
-                batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
-                         for batch_file in batch_files]
-                batch_images = np.array(batch).astype(np.float32)
+                #batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
+                #batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
+                #         for batch_file in batch_files]
+                #batch_images = np.array(batch).astype(np.float32)
+                batch_images = next(batches)
                 #batch_images = next(batches)
 
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
