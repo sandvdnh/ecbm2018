@@ -21,7 +21,7 @@ SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
 def dataset_files(root):
     """Returns a list of all image files in the given directory"""
     return list(itertools.chain.from_iterable(
-        glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
+        glob.glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
 
 
 GENERATOR_F = 64
