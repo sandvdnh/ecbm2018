@@ -71,6 +71,7 @@ class DCGAN(object):
             batch_norm(name='d_bn{}'.format(i,)) for i in range(4)]
 
         log_size = int(math.log(image_size) / math.log(2))
+        print(log_size)
         self.g_bns = [
             batch_norm(name='g_bn{}'.format(i,)) for i in range(log_size)]
 
@@ -421,27 +422,61 @@ Initializing a new one.
             hs[0] = tf.reshape(self.z_, [-1, 4, 4, self.gf_dim * 8])
             hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
 
-            i = 1 # Iteration number.
-            depth_mul = 8  # Depth decreases as spatial component increases.
-            size = 8  # Size increases as depth decreases.
+            out1, _, _ = conv2d_transpose(
+                    hs[0],
+                    [self.batch_size, 8, 8, self.gf_dim * 8],
+                    name='g_h1',
+                    with_w=True
+                    )
+            out1 = tf.nn.relu(self.g_bns[1](out1, self.is_training))
 
-            while size < self.image_size:
-                hs.append(None)
-                name = 'g_h{}'.format(i)
-                hs[i], _, _ = conv2d_transpose(hs[i-1],
-                    [self.batch_size, size, size, self.gf_dim*depth_mul], name=name, with_w=True)
-                hs[i] = tf.nn.relu(self.g_bns[i](hs[i], self.is_training))
+            out2, _, _ = conv2d_transpose(
+                    out1,
+                    [self.batch_size, 16, 16, self.gf_dim * 4],
+                    name='g_h2',
+                    with_w=True
+                    )
+            out2 = tf.nn.relu(self.g_bns[2](out2, self.is_training))
 
-                i += 1
-                depth_mul //= 2
-                size *= 2
+            out3, _, _ = conv2d_transpose(
+                    out2,
+                    [self.batch_size, 32, 32, self.gf_dim * 2],
+                    name='g_h3',
+                    with_w=True
+                    )
+            out3 = tf.nn.relu(self.g_bns[3](out3, self.is_training))
 
-            hs.append(None)
-            name = 'g_h{}'.format(i)
-            hs[i], _, _ = conv2d_transpose(hs[i - 1],
-                [self.batch_size, size, size, 3], name=name, with_w=True)
+            out4, _, _ = conv2d_transpose(
+                    out3,
+                    [self.batch_size, 64, 64, 3],
+                    name='g_h4',
+                    with_w=True
+                    )
+            out4 = tf.nn.relu(self.g_bns[4](out4, self.is_training))
+            return tf.nn.tanh(out4)
+
+
+            #i = 1 # Iteration number.
+            #depth_mul = 8  # Depth decreases as spatial component increases.
+            #size = 8  # Size increases as depth decreases.
+
+            #while size < self.image_size:
+            #    hs.append(None)
+            #    name = 'g_h{}'.format(i)
+            #    hs[i], _, _ = conv2d_transpose(hs[i-1],
+            #        [self.batch_size, size, size, self.gf_dim*depth_mul], name=name, with_w=True)
+            #    hs[i] = tf.nn.relu(self.g_bns[i](hs[i], self.is_training))
+
+            #    i += 1
+            #    depth_mul //= 2
+            #    size *= 2
+
+            #hs.append(None)
+            #name = 'g_h{}'.format(i)
+            #hs[i], _, _ = conv2d_transpose(hs[i - 1],
+            #    [self.batch_size, size, size, 3], name=name, with_w=True)
     
-            return tf.nn.tanh(hs[i])
+            #return tf.nn.tanh(hs[i])
 
     def save(self, checkpoint_dir, step):
         if not os.path.exists(checkpoint_dir):
