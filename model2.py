@@ -16,12 +16,12 @@ from ops2 import *
 from utils2 import *
 from model_funcs import *
 
-SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
-
-def dataset_files(root):
-    """Returns a list of all image files in the given directory"""
-    return list(itertools.chain.from_iterable(
-        glob.glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
+#SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
+#
+#def dataset_files(root):
+#    """Returns a list of all image files in the given directory"""
+#    return list(itertools.chain.from_iterable(
+#        glob.glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
 
 
 GENERATOR_F = 64
@@ -32,30 +32,40 @@ DISCRIMINATOR_FULLY_CONNECTED = 1024
 
 class DCGAN(object):
     def __init__(self, sess, 
-                 batch_size=64, sample_size=64,
-                 z_dim=100, #gf_dim=64, df_dim=64,
-                 #gfc_dim=1024, dfc_dim=1024,
-                 checkpoint_dir=None, lam=0.1):
+                 batch_size=64,
+                 sample_size=64,
+                 z_dim=100,
+                 checkpoint_dir=None,
+                 lam=0.1,
+                 dataset = 'celeba'):
         """
-        Args:
-            sess: TensorFlow session
-            batch_size: The size of batch. Should be specified before training.
-            gf_dim: (optional) Dimension of gen filters in first conv layer. [64]
-            df_dim: (optional) Dimension of discrim filters in first conv layer. [64]
-            gfc_dim: (optional) Dimension of gen untis for for fully connected layer. [1024]
-            dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
+        DCGAN Class:
+        Builds the discriminator and generator networks, and stores them in self.G and self.D
+        Contains a training method which trains the generator and discriminator.
+        
+        ARGUMENTS:
+        - sess: tensorflow session
+        - batch_size: batch size to use during training
+        - sample_size: width/height of the input pictures (hardcoded at 64 pixels by 64 pixels)
+        - z_dim: length of the z vector that is fed into the generator to create an image
+        - checkpoint_dir: directory to store the checkpoint
+        - lam: relative strength of the prior loss versus the context loss
+        - dataset: dataset to train the DCGAN on. Either 'celeba', 'cars', or 'svhn'; currently
+        only 'celeba' works. This (preprocessed, cfr model_funcs.py) dataset has to be stored in
+        ./datasets/img_align_celeba_preprocessed/.
         """
         self.sess = sess
         self.batch_size = batch_size
         self.image_size = 64
         self.sample_size = sample_size
         self.image_shape = [64, 64, 3]
+        self.dataset = dataset
 
         #self.lowres = lowres
         #self.lowres_size = image_size // lowres
         #self.lowres_shape = [self.lowres_size, self.lowres_size, c_dim]
 
-        self.z_dim = 100
+        self.z_dim = z_dim
 
         #self.gf_dim = gf_dim
         #self.df_dim = df_dim
@@ -66,7 +76,7 @@ class DCGAN(object):
         self.lam = lam
 
 
-        # batch normalization : deals with poor initialization helps gradient flow
+        # creates batch norm layers
         self.d_bns = [
             batch_norm(name='d_bn{}'.format(i,)) for i in range(4)]
 
@@ -77,7 +87,7 @@ class DCGAN(object):
         self.checkpoint_dir = checkpoint_dir
         self.build_model()
 
-        self.model_name = "DCGAN.model"
+        #self.model_name = "DCGAN.model"
 
     def build_model(self):
         self.is_training = tf.placeholder(tf.bool, name='is_training')
@@ -140,14 +150,16 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
 
     def train(self, config):
-        data = dataset_files(config.dataset)
-        np.random.shuffle(data)
-        assert(len(data) > 0)
+        #data = dataset_files(config.dataset)
+        #np.random.shuffle(data)
+        #assert(len(data) > 0)
 
-        d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.d_loss, var_list=self.d_vars)
-        g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.g_loss, var_list=self.g_vars)                
+        d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1).minimize(
+                self.d_loss,
+                var_list=self.d_vars)
+        g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1).minimize(
+                self.g_loss,
+                var_list=self.g_vars)                
         try:
             tf.global_variables_initializer().run()
         except:
@@ -159,7 +171,7 @@ class DCGAN(object):
             [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
         self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
 
-        sample_z = np.random.uniform(-1, 1, size=(self.sample_size , self.z_dim))
+        sample_z = np.random.uniform(-1, 1, size=(self.sample_size , 100))
         #sample_files = data[0:self.sample_size]
 
         #sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
@@ -167,7 +179,6 @@ class DCGAN(object):
 
         counter = 1
         start_time = time.time()
-
         if self.load(self.checkpoint_dir):
             print("""
 
@@ -190,17 +201,17 @@ Initializing a new one.
 ======
 
 """)
-        batches, batch_idxs = get_batches(self.batch_size, 'celeba')
+        batches, batch_idxs = get_batches(self.batch_size, self.dataset)
 
         for epoch in range(config.epoch):
-            data = dataset_files(config.dataset)
-            batch_idxs = min(len(data), config.train_size) // self.batch_size
+        #    data = dataset_files(config.dataset)
+        #    batch_idxs = min(len(data), config.train_size) // self.batch_size
 
             for idx in range(0, batch_idxs):
-                batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                batch = [get_image(batch_file, self.image_size, is_crop=False)
-                         for batch_file in batch_files]
-                batch_images = np.array(batch).astype(np.float32)
+                #batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
+                #batch = [get_image(batch_file, self.image_size, is_crop=False)
+                #         for batch_file in batch_files]
+                #batch_images = np.array(batch).astype(np.float32)
                 #print(np.mean(batch_images[0]))
                 #print(batch_images[0])
                 #print(np.min(batch_images[0]))
@@ -247,6 +258,78 @@ Initializing a new one.
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
+
+
+    def discriminator(self, image, reuse=False):
+        with tf.variable_scope("discriminator") as scope:
+            if reuse:
+                scope.reuse_variables()
+            h0 = lrelu(conv2d(image, DISCRIMINATOR_F, name='d_h0_conv'))
+            h1 = lrelu(self.d_bns[0](conv2d(h0, DISCRIMINATOR_F * 2, name='d_h1_conv'), self.is_training))
+            h2 = lrelu(self.d_bns[1](conv2d(h1, DISCRIMINATOR_F * 4, name='d_h2_conv'), self.is_training))
+            h3 = lrelu(self.d_bns[2](conv2d(h2, DISCRIMINATOR_F * 8, name='d_h3_conv'), self.is_training))
+            h4 = linear(tf.reshape(h3, [-1, 8192]), 1, 'd_h4_lin')
+            return tf.nn.sigmoid(h4), h4
+
+    def generator(self, z):
+        with tf.variable_scope("generator") as scope:
+            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
+    
+            ## TODO: Nicer iteration pattern here. #readability
+            hs = [None]
+            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 8])
+            hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
+
+            out1, _, _ = conv2d_transpose(
+                    hs[0],
+                    [self.batch_size, 8, 8, GENERATOR_F * 8],
+                    name='g_h1',
+                    with_w=True
+                    )
+            out1 = tf.nn.relu(self.g_bns[1](out1, self.is_training))
+
+            out2, _, _ = conv2d_transpose(
+                    out1,
+                    [self.batch_size, 16, 16, GENERATOR_F * 4],
+                    name='g_h2',
+                    with_w=True
+                    )
+            out2 = tf.nn.relu(self.g_bns[2](out2, self.is_training))
+
+            out3, _, _ = conv2d_transpose(
+                    out2,
+                    [self.batch_size, 32, 32, GENERATOR_F * 2],
+                    name='g_h3',
+                    with_w=True
+                    )
+            out3 = tf.nn.relu(self.g_bns[3](out3, self.is_training))
+
+            out4, _, _ = conv2d_transpose(
+                    out3,
+                    [self.batch_size, 64, 64, 3],
+                    name='g_h4',
+                    with_w=True
+                    )
+            return tf.nn.tanh(out4)
+
+
+    def save(self, checkpoint_dir, step):
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
+
+        self.saver.save(self.sess,
+                        os.path.join(checkpoint_dir, DCGAN.model),
+                        global_step=step)
+
+    def load(self, checkpoint_dir):
+        print(" [*] Reading checkpoints...")
+
+        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            return True
+        else:
+            return False
 
 
     def complete(self, config):
@@ -403,95 +486,3 @@ Initializing a new one.
                 else:
                     assert(False)
 
-    def discriminator(self, image, reuse=False):
-        with tf.variable_scope("discriminator") as scope:
-            if reuse:
-                scope.reuse_variables()
-            h0 = lrelu(conv2d(image, DISCRIMINATOR_F, name='d_h0_conv'))
-            h1 = lrelu(self.d_bns[0](conv2d(h0, DISCRIMINATOR_F * 2, name='d_h1_conv'), self.is_training))
-            h2 = lrelu(self.d_bns[1](conv2d(h1, DISCRIMINATOR_F * 4, name='d_h2_conv'), self.is_training))
-            h3 = lrelu(self.d_bns[2](conv2d(h2, DISCRIMINATOR_F * 8, name='d_h3_conv'), self.is_training))
-            h4 = linear(tf.reshape(h3, [-1, 8192]), 1, 'd_h4_lin')
-            return tf.nn.sigmoid(h4), h4
-
-    def generator(self, z):
-        with tf.variable_scope("generator") as scope:
-            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
-    
-            ## TODO: Nicer iteration pattern here. #readability
-            hs = [None]
-            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 8])
-            hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
-
-            out1, _, _ = conv2d_transpose(
-                    hs[0],
-                    [self.batch_size, 8, 8, GENERATOR_F * 8],
-                    name='g_h1',
-                    with_w=True
-                    )
-            out1 = tf.nn.relu(self.g_bns[1](out1, self.is_training))
-
-            out2, _, _ = conv2d_transpose(
-                    out1,
-                    [self.batch_size, 16, 16, GENERATOR_F * 4],
-                    name='g_h2',
-                    with_w=True
-                    )
-            out2 = tf.nn.relu(self.g_bns[2](out2, self.is_training))
-
-            out3, _, _ = conv2d_transpose(
-                    out2,
-                    [self.batch_size, 32, 32, GENERATOR_F * 2],
-                    name='g_h3',
-                    with_w=True
-                    )
-            out3 = tf.nn.relu(self.g_bns[3](out3, self.is_training))
-
-            out4, _, _ = conv2d_transpose(
-                    out3,
-                    [self.batch_size, 64, 64, 3],
-                    name='g_h4',
-                    with_w=True
-                    )
-            return tf.nn.tanh(out4)
-
-
-            #i = 1 # Iteration number.
-            #depth_mul = 8  # Depth decreases as spatial component increases.
-            #size = 8  # Size increases as depth decreases.
-
-            #while size < self.image_size:
-            #    hs.append(None)
-            #    name = 'g_h{}'.format(i)
-            #    hs[i], _, _ = conv2d_transpose(hs[i-1],
-            #        [self.batch_size, size, size, self.gf_dim*depth_mul], name=name, with_w=True)
-            #    hs[i] = tf.nn.relu(self.g_bns[i](hs[i], self.is_training))
-
-            #    i += 1
-            #    depth_mul //= 2
-            #    size *= 2
-
-            #hs.append(None)
-            #name = 'g_h{}'.format(i)
-            #hs[i], _, _ = conv2d_transpose(hs[i - 1],
-            #    [self.batch_size, size, size, 3], name=name, with_w=True)
-    
-            #return tf.nn.tanh(hs[i])
-
-    def save(self, checkpoint_dir, step):
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
-
-        self.saver.save(self.sess,
-                        os.path.join(checkpoint_dir, self.model_name),
-                        global_step=step)
-
-    def load(self, checkpoint_dir):
-        print(" [*] Reading checkpoints...")
-
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
-        if ckpt and ckpt.model_checkpoint_path:
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-            return True
-        else:
-            return False
