@@ -180,27 +180,9 @@ class DCGAN(object):
         counter = 1
         start_time = time.time()
         if self.load(self.checkpoint_dir):
-            print("""
-
-======
-An existing model was found in the checkpoint directory.
-If you just cloned this repository, it's a model for faces
-trained on the CelebA dataset for 20 epochs.
-If you want to train a new model from scratch,
-delete the checkpoint directory or specify a different
---checkpoint_dir argument.
-======
-
-""")
+            print('Existing checkpoint found')
         else:
-            print("""
-
-======
-An existing model was not found in the checkpoint directory.
-Initializing a new one.
-======
-
-""")
+            print('Starting training from scratch')
         batches, batch_idxs = get_batches(self.batch_size, self.dataset)
 
         for epoch in range(config.epoch):
@@ -275,7 +257,6 @@ Initializing a new one.
         with tf.variable_scope("generator") as scope:
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
     
-            ## TODO: Nicer iteration pattern here. #readability
             hs = [None]
             hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 8])
             hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
@@ -318,7 +299,7 @@ Initializing a new one.
             os.makedirs(checkpoint_dir)
 
         self.saver.save(self.sess,
-                        os.path.join(checkpoint_dir, DCGAN.model),
+                        os.path.join(checkpoint_dir, 'DCGAN.model'),
                         global_step=step)
 
     def load(self, checkpoint_dir):
