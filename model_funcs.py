@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
-from scipy.misc import imresize
+from scipy.misc import imresize, imsave
 from utils import crop
 
 try:
@@ -106,7 +106,7 @@ def get_batches_svhn(batch_size):
             yield batch
 
 
-def get_batches_celeba(batch_size):
+def get_batches_celeba(batch_size, preprocessed = True, use_preprocessed = True):
     '''
     Returns iterator for celebs dataset
     Expects data files to be located in ./datasets/img_align_celeba/
@@ -135,16 +135,41 @@ def get_batches_celeba(batch_size):
     filenames += [f for f in listdir(path) if isfile(join(path, f))]
     n = len(filenames)
     n_batches = int(n / batch_size)
-    while True:
+    preprocessed_dir = os.path.join('datasets', 'img_align_celeba_preprocessed')
+    if not preprocessed:
+        print('preprocessing images and saving them... ')
+        for i in range(n_batches):
+            batch = np.zeros((batch_size, 64, 64, 3))
+            print(i, n_batches)
+            for j in range(batch_size):
+                try:
+                    x = plt.imread(os.path.join(path, filenames[i * batch_size + j]))
+                    x = imresize(x, 60) / 255
+                    x = crop(x)
+                    x = 2 * x - 1
+                    imsave(os.path.join(preprocessed_dir, '{:06d}'.format(i * batch_size + j) + '.jpg'), x)
+                except OSError:
+                    print('OSERROR')
+    if use_preprocessed:
+        filenames = []
+        filenames += [f for f in listdir(preprocessed_dir) if isfile(join(preprocessed_dir, f))]
         for i in range(n_batches):
             batch = np.zeros((batch_size, 64, 64, 3))
             for j in range(batch_size):
-                x = plt.imread(os.path.join(path, filenames[i * batch_size + j]))
-                x = imresize(x, 60) / 255
-                x = crop(x)
-                x = 2 * x - 1
+                x = plt.imread(os.path.join(preprocessed_dir, filenames[i * batch_size + j]))
                 batch[j] = x.copy()
             yield batch
+    else:
+        while True:
+            for i in range(n_batches):
+                batch = np.zeros((batch_size, 64, 64, 3))
+                for j in range(batch_size):
+                    x = plt.imread(os.path.join(path, filenames[i * batch_size + j]))
+                    x = imresize(x, 60) / 255
+                    x = crop(x)
+                    x = 2 * x - 1
+                    batch[j] = x.copy()
+                yield batch
 
 
 def get_batches_cars(batch_size):
@@ -232,5 +257,6 @@ def get_batches_cars(batch_size):
 # Simple example on how to use this
 if __name__ == '__main__':
     my_iterator, _ = get_batches(10, dataset = 'celeba')
-    for i in range(3):
+    for i in range(20):
         images = next(my_iterator)
+        print('done')
