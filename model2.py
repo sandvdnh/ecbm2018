@@ -41,7 +41,7 @@ class DCGAN(object):
         self.batch_size = batch_size
         self.image_size = 64
         self.sample_size = sample_size
-        self.image_shape = [image_size, image_size, 3]
+        self.image_shape = [64, 64, 3]
 
         #self.lowres = lowres
         #self.lowres_size = image_size // lowres
