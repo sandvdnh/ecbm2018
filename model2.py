@@ -230,13 +230,13 @@ Initializing a new one.
                     epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
 
                 if np.mod(counter, 100) == 0:
-                    print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
                     samples = self.sess.run(
                         self.G,
                         feed_dict={self.z: sample_z, self.is_training: False}
                     )
                     save_images(samples, [8, 8],
                                 './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
+                    print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(0, 0))
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
