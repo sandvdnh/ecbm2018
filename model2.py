@@ -193,7 +193,7 @@ Initializing a new one.
                 #batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
                 #         for batch_file in batch_files]
                 #batch_images = np.array(batch).astype(np.float32)
-                batch_images = next(batches).astype(np.float32) / 255
+                batch_images = (next(batches).astype(np.float32) + 1) / 2
 
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
