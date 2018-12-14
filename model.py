@@ -5,12 +5,15 @@
 '''
 
 import time
+import math
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
 from model_funcs import *
   
+def conv_out_size_same(size, stride):
+    return int(math.ceil(float(size) / float(stride)))
     
 class DCGAN:
     def __init__(self, sess, input_height=64, input_width=64, batch_size=64, sample_num = 64, output_height=64, output_width=64,
@@ -210,7 +213,7 @@ class DCGAN:
         print('number of batches for training: {}'.format(iters))
 
         for epc in range(epochs):
-            print("epoch {} ".format(epc))
+            print("epoch {} ".format(epc+1))
             for i in range(iters):
                 counter += 1
                 #get batch
@@ -236,7 +239,7 @@ class DCGAN:
                 
                 if counter % 10 == 1:
                     print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
-                      % (epc, epochs, i, iters,
+                      % (epc+1, epochs, i, iters,
                         time.time() - start_time, errD_fake+errD_real, errG))
                 
                 if counter % 100 == 1:
@@ -244,60 +247,49 @@ class DCGAN:
                     sample_in = tf.random_uniform([self.batch_size, self.z_dim], minval=-1.0, maxval=1.0)
                     sample_input = self.sampler(sample_in)
                     samples = self.sess.run([sample_input])
+                    #print(samples)
                     #rescale generated image
-                    samples = (samples + 1) * 255 / 2
+                    samples = (samples[0] + 1) * 255 / 2
+                    
+                    
                     #show generated image
-                    plt.imshow(samples)
+                    img=samples[0,:,:,:]
+                    #print(img)
+                    img = img.astype(int)
+                    plt.imshow(img)
                     plt.show()
 
-                    plt.savefig('img_{}'.format(counter+epc))
-                '''
-                    try:
-                        sample_in = tf.random_uniform([self.batch_size, self.z_dim], minval=-1.0, maxval=1.0)
-                        sample_input = self.sampler(sample_in)
-                        samples = self.sess.run([sample_input])
-                        #rescale generated image
-                        samples = (samples + 1) * 255 / 2
-                        #show generated image
-                        plt.imshow(samples)
-                        plt.show()
-                        
-                        plt.savefig('img_{}'.format(counter+epc))
-                        print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
-                    except:
-                        print("one pic error!...")
-                    '''
-
-                # Save checkpoint
-                if counter % 500 == 1:
-                    saver.save(sess, 'model/{}'.format(cur_model_name))
+                    plt.savefig('gen_train_img/img_{}'.format(counter+epc))
+               
+                    # Save checkpoint
+                    saver.save(self.sess, 'model/{}'.format(cur_model_name))
     
     def sampler(self, z, y=None):
         # This function creates sample images for validation in the training function
-        with tf.variable_scope('generator') as scope:
-            scope.reuse_variables()
+        with tf.variable_scope('generator', reuse=tf.AUTO_REUSE) as scope:
+            #scope.reuse_variables()
             
-            s_h, s_w = self.output_height, self.output_width
-            s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-            s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-            s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-            s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
-
-            # project `z` and reshape
-            h0 = tf.reshape(linear(z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin'), [-1, s_h16, s_w16, self.gf_dim * 8])
-            h0 = tf.nn.relu(self.g_bn0(h0, train=False))
-
-            h1 = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
-            h1 = tf.nn.relu(self.g_bn1(h1, train=False))
-
-            h2 = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2')
-            h2 = tf.nn.relu(self.g_bn2(h2, train=False))
-
-            h3 = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3')
-            h3 = tf.nn.relu(self.g_bn3(h3, train=False))
-
-            h4 = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4')
-
-            return tf.nn.tanh(h4)
-
+            #reshape from inputs            
+            reshape_out = tf.layers.dense(z, self.g_dim[0] * self.s_size * self.s_size)
+            reshape_out = tf.reshape(reshape_out, [-1, self.s_size, self.s_size, self.g_dim[0]])
+            reshape_out = tf.nn.relu(tf.layers.batch_normalization(reshape_out, training=False), name='g_reshape')
+            
+            # deconv layer 1
+            conv_1 = tf.layers.conv2d_transpose(reshape_out, self.g_dim[1], [5, 5], strides=(2, 2), padding='SAME')
+            conv_1 = tf.nn.relu(tf.layers.batch_normalization(conv_1, training=False), name='g_conv_1')
+            
+            # deconv layer 2
+            conv_2 = tf.layers.conv2d_transpose(conv_1, self.g_dim[2], [5, 5], strides=(2, 2), padding='SAME')
+            conv_2 = tf.nn.relu(tf.layers.batch_normalization(conv_2, training=False), name='g_conv_2')
+            
+            # deconv layer 3
+            conv_3 = tf.layers.conv2d_transpose(conv_2, self.g_dim[3], [5, 5], strides=(2, 2), padding='SAME')
+            conv_3 = tf.nn.relu(tf.layers.batch_normalization(conv_3, training=False), name='g_conv_3')
+            
+            # deconv layer 4
+            conv_4 = tf.layers.conv2d_transpose(conv_3, self.g_dim[4], [5, 5], strides=(2, 2), padding='SAME')
+            
+            #output image
+            return(tf.nn.tanh(conv_4))
+            
         
