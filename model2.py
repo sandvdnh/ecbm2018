@@ -62,7 +62,7 @@ class DCGAN(object):
         self.d_bns = [
             batch_norm(name='d_bn{}'.format(i,)) for i in range(4)]
 
-        log_size = int(math.log(image_size) / math.log(2))
+        log_size = 6 # log_2(64)
         self.g_bns = [
             batch_norm(name='g_bn{}'.format(i,)) for i in range(log_size)]
 
