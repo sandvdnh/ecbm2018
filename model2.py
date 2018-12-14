@@ -16,6 +16,14 @@ from ops2 import *
 from utils2 import *
 from model_funcs import *
 
+SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
+
+def dataset_files(root):
+    """Returns a list of all image files in the given directory"""
+    return list(itertools.chain.from_iterable(
+        glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
+
+
 GENERATOR_F = 64
 DISCRIMINATOR_F = 64
 
@@ -132,9 +140,9 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
 
     def train(self, config):
-        #data = dataset_files(config.dataset)
-        #np.random.shuffle(data)
-        #assert(len(data) > 0)
+        data = dataset_files(config.dataset)
+        np.random.shuffle(data)
+        assert(len(data) > 0)
 
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d_loss, var_list=self.d_vars)
@@ -185,15 +193,15 @@ Initializing a new one.
         batches, batch_idxs = get_batches(self.batch_size, 'celeba')
 
         for epoch in range(config.epoch):
-            #data = dataset_files(config.dataset)
-            #batch_idxs = min(len(data), config.train_size) // self.batch_size
+            data = dataset_files(config.dataset)
+            batch_idxs = min(len(data), config.train_size) // self.batch_size
 
             for idx in range(0, batch_idxs):
-                #batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                #batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
-                #         for batch_file in batch_files]
-                #batch_images = np.array(batch).astype(np.float32)
-                batch_images = (next(batches).astype(np.float32) + 1) / 2
+                batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
+                batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
+                         for batch_file in batch_files]
+                batch_images = np.array(batch).astype(np.float32)
+                #batch_images = (next(batches).astype(np.float32) + 1) / 2
 
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
