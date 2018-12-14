@@ -198,7 +198,7 @@ Initializing a new one.
 
             for idx in range(0, batch_idxs):
                 batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
+                batch = [get_image(batch_file, self.image_size, is_crop=False)
                          for batch_file in batch_files]
                 batch_images = np.array(batch).astype(np.float32)
                 #batch_images = (next(batches).astype(np.float32) + 1) / 2
