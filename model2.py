@@ -160,10 +160,10 @@ class DCGAN(object):
         self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
 
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , self.z_dim))
-        #sample_files = data[0:self.sample_size]
+        sample_files = data[0:self.sample_size]
 
-        #sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
-        #sample_images = np.array(sample).astype(np.float32)
+        sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
+        sample_images = np.array(sample).astype(np.float32)
 
         counter = 1
         start_time = time.time()
@@ -228,7 +228,8 @@ Initializing a new one.
                 print("Epoch: [{:2d}] [{:4d}/{:4d}] time: {:4.4f}, d_loss: {:.8f}, g_loss: {:.8f}".format(
                     epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
 
-                if np.mod(counter, 100) == 1:
+                if np.mod(counter, 1) == 1:
+                    print(sample_images.shape)
                     samples, d_loss, g_loss = self.sess.run(
                         [self.G, self.d_loss, self.g_loss],
                         feed_dict={self.z: sample_z, self.images: sample_images, self.is_training: False}
