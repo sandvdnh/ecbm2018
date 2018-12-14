@@ -323,6 +323,7 @@ class DCGAN:
                
                     # Save checkpoint
                     saver.save(self.sess, 'model/{}'.format(cur_model_name))
+        print("Training complete. Model named {}.".format(cur_model_name))
     
     def sampler(self, z, y=None):
         # This function creates sample images for validation in the training function
