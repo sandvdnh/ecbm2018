@@ -452,7 +452,6 @@ Initializing a new one.
                     name='g_h4',
                     with_w=True
                     )
-            out4 = tf.nn.relu(self.g_bns[4](out4, self.is_training))
             return tf.nn.tanh(out4)
 
 
