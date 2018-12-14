@@ -228,23 +228,20 @@ Initializing a new one.
                 print("Epoch: [{:2d}] [{:4d}/{:4d}] time: {:4.4f}, d_loss: {:.8f}, g_loss: {:.8f}".format(
                     epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
 
-                if np.mod(counter, 1) == 0:
-                    print(sample_images.shape)
-                    samples, d_loss, g_loss = self.sess.run(
-                        [self.G, self.d_loss, self.g_loss],
-                        feed_dict={self.z: sample_z, self.images: sample_images, self.is_training: False}
-                    )
-                    print(samples.shape)
-                    save_images(samples, [8, 8],
-                                './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
-                    print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
-                    samples = self.sess.run(
-                        [self.G],
-                        feed_dict={self.z: sample_z, self.is_training: False}
-                    )
-                    print('new samples', samples.shape)
+                if np.mod(counter, 100) == 0:
+                    #samples, d_loss, g_loss = self.sess.run(
+                    #    [self.G, self.d_loss, self.g_loss],
+                    #    feed_dict={self.z: sample_z, self.images: sample_images, self.is_training: False}
+                    #)
                     #save_images(samples, [8, 8],
                     #            './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
+                    #print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
+                    samples = self.sess.run(
+                        self.G,
+                        feed_dict={self.z: sample_z, self.is_training: False}
+                    )
+                    save_images(samples, [8, 8],
+                                './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
 
                 if np.mod(counter, 500) == 2:
                     self.save(config.checkpoint_dir, counter)
