@@ -54,6 +54,66 @@ class DCGAN:
         
     
     
+    def inpainting(self,learning_rate,test_image,iterations,lamda=0.002):
+        '''
+        Test of Semantic inpainting
+        this function applies a mask
+        to the input image and then produces a visually similar image to the original
+        
+        uses functions from utils
+        Input Arguments
+        test- a single test image
+        Outputs
+        outputs- predicted images to match masked images. traverses a manifold using back-propogation
+        '''
+        import numpy as np
+        import tensorflow as tf
+        from utils import block_mask
+        from utils import random_mask
+        from utils import half_missing_mask
+        
+        #apply mask to image and keep mask for later use
+        self.image = test_image
+        masked_test, mask = block_mask(self.image,30)
+        test_image = np.reshape(test_image,(1,64,64,3))
+        mask = np.reshape(mask,(1,64,64,3))
+        masked_test = np.reshape(masked_test,(1,64,64,3))
+        
+        self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
+        self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
+        self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
+        
+        #self.mask = mask
+        
+        #generate random z as a changeable variable 
+        #self.z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32) 
+        self.z = tf.random_uniform([1,100],minval=-1,maxval=1,dtype=tf.float32,seed=None,name='z')
+       
+        #Define loss as sum of both types of loss
+        self.weighted_context_loss = tf.reduce_sum( tf.abs(tf.multiply(self.generator(self.z),self.mask) - tf.multiply(self.image,self.mask) ) )
+        self.perceptual_loss = self.g_loss 
+        self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
+        
+        #define optimization function (gradient descent)
+        self.gradients = tf.gradients(self.complete_loss,self.z)
+        
+        #gradient descent back propogation to update input z
+        tf.global_variables_initializer().run()
+        for i in range(iterations):
+            
+            loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
+           
+            self.z = self.z - g[0]*learning_rate 
+            
+           
+        #rescale image Gz properly
+        Gz = ((Gz + 1) / 2) * 255
+        #crop out center and add it to test image
+        fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
+        new_image =  masked_test + fill
+        
+        return new_image  
+        
         
     def generator(self, inputs, training=False):
         '''
