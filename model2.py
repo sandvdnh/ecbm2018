@@ -229,13 +229,7 @@ Initializing a new one.
                     epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
 
                 if np.mod(counter, 100) == 0:
-                    #samples, d_loss, g_loss = self.sess.run(
-                    #    [self.G, self.d_loss, self.g_loss],
-                    #    feed_dict={self.z: sample_z, self.images: sample_images, self.is_training: False}
-                    #)
-                    #save_images(samples, [8, 8],
-                    #            './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
-                    #print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
+                    print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
                     samples = self.sess.run(
                         self.G,
                         feed_dict={self.z: sample_z, self.is_training: False}
@@ -410,7 +404,6 @@ Initializing a new one.
             if reuse:
                 scope.reuse_variables()
 
-            # TODO: Investigate how to parameterise discriminator based off image size.
             h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
             h1 = lrelu(self.d_bns[0](conv2d(h0, self.df_dim*2, name='d_h1_conv'), self.is_training))
             h2 = lrelu(self.d_bns[1](conv2d(h1, self.df_dim*4, name='d_h2_conv'), self.is_training))
