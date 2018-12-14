@@ -16,62 +16,53 @@ from ops2 import *
 from utils2 import *
 from model_funcs import *
 
-SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
+GENERATOR_F = 64
+DISCRIMINATOR_F = 64
 
-def dataset_files(root):
-    """Returns a list of all image files in the given directory"""
-    return list(itertools.chain.from_iterable(
-        glob.glob(os.path.join(root, "*.{}".format(ext))) for ext in SUPPORTED_EXTENSIONS))
-
+GENERATOR_FULLY_CONNECTED = 1024
+DISCRIMINATOR_FULLY_CONNECTED = 1024
 
 class DCGAN(object):
-    def __init__(self, sess, image_size=64, is_crop=False,
-                 batch_size=64, sample_size=64, lowres=1,
-                 z_dim=100, gf_dim=64, df_dim=64,
-                 gfc_dim=1024, dfc_dim=1024, c_dim=3,
+    def __init__(self, sess, 
+                 batch_size=64, sample_size=64,
+                 z_dim=100, #gf_dim=64, df_dim=64,
+                 #gfc_dim=1024, dfc_dim=1024,
                  checkpoint_dir=None, lam=0.1):
         """
-
         Args:
             sess: TensorFlow session
             batch_size: The size of batch. Should be specified before training.
-            lowres: (optional) Low resolution image/mask shrink factor. [8]
-            z_dim: (optional) Dimension of dim for Z. [100]
             gf_dim: (optional) Dimension of gen filters in first conv layer. [64]
             df_dim: (optional) Dimension of discrim filters in first conv layer. [64]
             gfc_dim: (optional) Dimension of gen untis for for fully connected layer. [1024]
             dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
-            c_dim: (optional) Dimension of image color. [3]
         """
         self.sess = sess
-        self.is_crop = is_crop
         self.batch_size = batch_size
-        self.image_size = image_size
+        self.image_size = 64
         self.sample_size = sample_size
-        self.image_shape = [image_size, image_size, c_dim]
+        self.image_shape = [image_size, image_size, 3]
 
         #self.lowres = lowres
         #self.lowres_size = image_size // lowres
         #self.lowres_shape = [self.lowres_size, self.lowres_size, c_dim]
 
-        self.z_dim = z_dim
+        self.z_dim = 100
 
-        self.gf_dim = gf_dim
-        self.df_dim = df_dim
+        #self.gf_dim = gf_dim
+        #self.df_dim = df_dim
 
-        self.gfc_dim = gfc_dim
-        self.dfc_dim = dfc_dim
+        #self.gfc_dim = gfc_dim
+        #self.dfc_dim = dfc_dim
 
         self.lam = lam
 
-        self.c_dim = c_dim
 
         # batch normalization : deals with poor initialization helps gradient flow
         self.d_bns = [
             batch_norm(name='d_bn{}'.format(i,)) for i in range(4)]
 
         log_size = int(math.log(image_size) / math.log(2))
-        print(log_size)
         self.g_bns = [
             batch_norm(name='g_bn{}'.format(i,)) for i in range(log_size)]
 
@@ -141,9 +132,9 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
 
     def train(self, config):
-        data = dataset_files(config.dataset)
-        np.random.shuffle(data)
-        assert(len(data) > 0)
+        #data = dataset_files(config.dataset)
+        #np.random.shuffle(data)
+        #assert(len(data) > 0)
 
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.d_loss, var_list=self.d_vars)
@@ -194,14 +185,14 @@ Initializing a new one.
         batches, batch_idxs = get_batches(self.batch_size, 'celeba')
 
         for epoch in range(config.epoch):
-            data = dataset_files(config.dataset)
-            batch_idxs = min(len(data), config.train_size) // self.batch_size
+            #data = dataset_files(config.dataset)
+            #batch_idxs = min(len(data), config.train_size) // self.batch_size
 
             for idx in range(0, batch_idxs):
-                batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
-                         for batch_file in batch_files]
-                batch_images = np.array(batch).astype(np.float32)
+                #batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
+                #batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
+                #         for batch_file in batch_files]
+                #batch_images = np.array(batch).astype(np.float32)
                 batch_images = next(batches).astype(np.float32) / 255
 
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
@@ -295,6 +286,7 @@ Initializing a new one.
             u = min((idx+1)*self.batch_size, nImgs)
             batchSz = u-l
             batch_files = config.imgs[l:u]
+            # !!Change
             batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
                      for batch_file in batch_files]
             batch_images = np.array(batch).astype(np.float32)
@@ -315,13 +307,6 @@ Initializing a new one.
             masked_images = np.multiply(batch_images, mask)
             save_images(masked_images[:batchSz,:,:,:], [nRows,nCols],
                         os.path.join(config.outDir, 'masked.png'))
-            #if lowres_mask.any():
-            #    lowres_images = np.reshape(batch_images, [self.batch_size, self.lowres_size, self.lowres,
-            #        self.lowres_size, self.lowres, self.c_dim]).mean(4).mean(2)
-            #    lowres_images = np.multiply(lowres_images, lowres_mask)
-            #    lowres_images = np.repeat(np.repeat(lowres_images, self.lowres, 1), self.lowres, 2)
-            #    save_images(lowres_images[:batchSz,:,:,:], [nRows,nCols],
-            #                os.path.join(config.outDir, 'lowres.png'))
             for img in range(batchSz):
                 with open(os.path.join(config.outDir, 'logs/hats_{:02d}.log'.format(img)), 'a') as f:
                     f.write('iter loss ' +
@@ -406,27 +391,25 @@ Initializing a new one.
         with tf.variable_scope("discriminator") as scope:
             if reuse:
                 scope.reuse_variables()
-
-            h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-            h1 = lrelu(self.d_bns[0](conv2d(h0, self.df_dim*2, name='d_h1_conv'), self.is_training))
-            h2 = lrelu(self.d_bns[1](conv2d(h1, self.df_dim*4, name='d_h2_conv'), self.is_training))
-            h3 = lrelu(self.d_bns[2](conv2d(h2, self.df_dim*8, name='d_h3_conv'), self.is_training))
+            h0 = lrelu(conv2d(image, DISCRIMINATOR_F, name='d_h0_conv'))
+            h1 = lrelu(self.d_bns[0](conv2d(h0, DISCRIMINATOR_F * 2, name='d_h1_conv'), self.is_training))
+            h2 = lrelu(self.d_bns[1](conv2d(h1, DISCRIMINATOR_F * 4, name='d_h2_conv'), self.is_training))
+            h3 = lrelu(self.d_bns[2](conv2d(h2, DISCRIMINATOR_F * 8, name='d_h3_conv'), self.is_training))
             h4 = linear(tf.reshape(h3, [-1, 8192]), 1, 'd_h4_lin')
-    
             return tf.nn.sigmoid(h4), h4
 
     def generator(self, z):
         with tf.variable_scope("generator") as scope:
-            self.z_, self.h0_w, self.h0_b = linear(z, self.gf_dim*8*4*4, 'g_h0_lin', with_w=True)
+            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
     
             ## TODO: Nicer iteration pattern here. #readability
             hs = [None]
-            hs[0] = tf.reshape(self.z_, [-1, 4, 4, self.gf_dim * 8])
+            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 8])
             hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
 
             out1, _, _ = conv2d_transpose(
                     hs[0],
-                    [self.batch_size, 8, 8, self.gf_dim * 8],
+                    [self.batch_size, 8, 8, GENERATOR_F * 8],
                     name='g_h1',
                     with_w=True
                     )
@@ -434,7 +417,7 @@ Initializing a new one.
 
             out2, _, _ = conv2d_transpose(
                     out1,
-                    [self.batch_size, 16, 16, self.gf_dim * 4],
+                    [self.batch_size, 16, 16, GENERATOR_F * 4],
                     name='g_h2',
                     with_w=True
                     )
@@ -442,7 +425,7 @@ Initializing a new one.
 
             out3, _, _ = conv2d_transpose(
                     out2,
-                    [self.batch_size, 32, 32, self.gf_dim * 2],
+                    [self.batch_size, 32, 32, GENERATOR_F * 2],
                     name='g_h3',
                     with_w=True
                     )
