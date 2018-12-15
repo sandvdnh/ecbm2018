@@ -2,7 +2,7 @@
 
 How to run the code:
 
-Run Project_Notebook.ipynb to run code and train DCGAN
+Run Project_Notebook.ipynb to train DCGAN and implement inpainting
 
 
 ## Function of each file:
@@ -13,7 +13,7 @@ Project_Notebook.ipynb: Main function to train DCGAN and implement inpainting
 
 data_utils: functions for preprocessing data
 
-model.py: contains all functions neccesary for runnign DCGAN and image inpainting
+model.py: contains all functions neccesary for running DCGAN and image inpainting
 
 model_funcs: secondary functions used by model.py
 
@@ -26,11 +26,11 @@ model.py: contains all functions neccesary for running DCGAN and image inpaintin
 Run Project_notebook.ipynb should automatically download the datasets and has a link to them.
 Those links are also posted below:
 
-celeba:
+celeba: https://www.kaggle.com/jessicali9530/celeba-dataset
 
 SVHN: http://ufldl.stanford.edu/housenumbers/
 
-cars:
+cars: https://ai.stanford.edu/~jkrause/cars/car_dataset.html
 
 
 
