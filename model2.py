@@ -400,7 +400,7 @@ class DCGAN(object):
             self.weight,
             tf.multiply(self.G, self.mask) - tf.multiply(test_image, self.mask))))
         #self.perceptual_loss = self.g_loss
-        self.perceptual_loss, _ = self.D_
+        self.perceptual_loss = self.D_
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
