@@ -160,6 +160,8 @@ class DCGAN(object):
         self.perceptual_loss = self.g_loss
         self.complete_loss = self.contextual_loss + self.lam*self.perceptual_loss
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
+        self.capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
+        self.train_op = optimizer.apply_gradients([(capped_gradient, self.z)])
 
     def train(self, config):
         # Function to train the DCGAN.  Both the discriminator and generator are trained concurrently.
@@ -410,8 +412,6 @@ class DCGAN(object):
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-        capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
-        train_op = optimizer.apply_gradients([(capped_gradient, z)])
         #zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
         tf.global_variables_initializer().run()
         for i in range(iterations):
@@ -421,13 +421,13 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
-                self.z: z,
+                self.z: tf.reshape(z, (1, 100)),
                 self.images: test_image,
                 self.is_training: False
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
-            run = [self.complete_loss, train_op]
+            run = [self.complete_loss, self.train_op]
             loss, g = self.sess.run(run, feed_dict=fd)
             #zhats = zhats - g[0]*learning_rate
             print(z)
