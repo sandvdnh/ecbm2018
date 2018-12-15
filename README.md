@@ -13,7 +13,7 @@ Project_Notebook.ipynb: Main function to train DCGAN and implement inpainting
 
 data_utils: functions for preprocessing data
 
-model.py: contains all functions neccesary for runnign DCGAN and image inpainting
+model.py: contains all functions neccesary for running DCGAN and image inpainting
 
 model_funcs: secondary functions used by model.py
 
