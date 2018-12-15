@@ -432,7 +432,7 @@ class DCGAN(object):
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
             run = [self.complete_loss, self.capped_gradient]
             loss, g = self.sess.run(run, feed_dict=fd)
-            z = z - g[0]*learning_rate
+            z = z - g[0]*0.0001
             print(z)
 
 
