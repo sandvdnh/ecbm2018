@@ -188,7 +188,7 @@ class DCGAN(object):
                 # to generate realistic faces
                 if np.mod(counter, 100) == 0:
                     samples = self.sess.run(self.G, feed_dict={self.z: sample_z, self.is_training: False})
-                    save_images(samples[0], [1, 1],
+                    save_image(samples[0], [1, 1],
                                 './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
                     print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(0, 0))
 
