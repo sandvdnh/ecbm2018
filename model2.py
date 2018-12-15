@@ -239,7 +239,7 @@ class DCGAN(object):
             out_ = tf.nn.relu(self.g_bns[0](var_, self.is_training))
 
             out1, _, _ = conv2d_transpose(
-                    hs[0],
+                    out_,
                     [self.batch_size, 8, 8, GENERATOR_F * 8],
                     name='g_h1',
                     with_w=True
