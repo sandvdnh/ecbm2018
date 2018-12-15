@@ -7,14 +7,13 @@
 #  Version date: 12/15/2018
 '''
 
-from __future__ import division
 import os
 from glob import glob
 import tensorflow as tf
 import time
 import math
 import itertools
-from utils2 import *
+#from utils2 import *
 from model_funcs import *
 from utils import block_mask
 
@@ -232,9 +231,6 @@ class DCGAN(object):
                 scope.reuse_variables()
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', with_w=True)
     
-            #hs = [None]
-            #hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
-            #hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
             var_ = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
             out_ = tf.nn.relu(self.g_bns[0](var_, self.is_training))
 
@@ -345,7 +341,6 @@ class DCGAN(object):
         # saves checkpoint for later
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
-
         self.saver.save(self.sess,
                         os.path.join(checkpoint_dir, 'DCGAN.model'),
                         global_step=step)
