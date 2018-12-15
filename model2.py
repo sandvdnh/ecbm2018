@@ -1,8 +1,11 @@
-# Original Version: Taehoon Kim (http://carpedm20.github.io)
-#   + Source: https://github.com/carpedm20/DCGAN-tensorflow/blob/e30539fb5e20d5a0fed40935853da97e9e55eee8/model.py
-#   + License: MIT
-# [2016-08-05] Modifications for Completion: Brandon Amos (http://bamos.github.io)
-#   + License: MIT
+'''
+#  model.py
+#
+#  Implements DCGAN model
+#  Performs inpainting of masked images
+#
+#  Version date: 12/15/2018
+'''
 
 from __future__ import division
 import os
@@ -94,6 +97,10 @@ class DCGAN(object):
         #self.model_name = "DCGAN.model"
 
     def build_model(self):
+        '''
+        This function builds the initial model to be trained on the datasets. Both the Discriminator and Generator are created.  
+        Sigmoid Cross Entropy loss is used as the loss function.
+        '''
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.images = tf.placeholder(
             tf.float32, [None] + self.image_shape, name='real_images')
@@ -102,7 +109,8 @@ class DCGAN(object):
         #     self.lowres_size, self.lowres, self.c_dim]), [2, 4])
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
         self.z_sum = tf.summary.histogram("z", self.z)
-
+        
+        # create Generator and Discriminators
         self.G = self.generator(self.z)
         #self.lowres_G = tf.reduce_mean(tf.reshape(self.G,
         #    [self.batch_size, self.lowres_size, self.lowres,
@@ -114,7 +122,8 @@ class DCGAN(object):
         self.d_sum = tf.summary.histogram("d", self.D)
         self.d__sum = tf.summary.histogram("d_", self.D_)
         self.G_sum = tf.summary.image("G", self.G)
-
+        
+        # loss functions
         self.d_loss_real = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits,
                                                     labels=tf.ones_like(self.D)))
@@ -137,7 +146,8 @@ class DCGAN(object):
 
         self.d_vars = [var for var in t_vars if 'd_' in var.name]
         self.g_vars = [var for var in t_vars if 'g_' in var.name]
-
+        
+        # save values
         self.saver = tf.train.Saver(max_to_keep=1)
 
         # Completion.
@@ -154,10 +164,13 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
 
     def train(self, config):
+        # Function to train the DCGAN.  Both the discriminator and generator are trained concurrently.
+        
         #data = dataset_files(config.dataset)
         #np.random.shuffle(data)
         #assert(len(data) > 0)
-
+        
+        # perform optimization
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1).minimize(
                 self.d_loss,
                 var_list=self.d_vars)
@@ -174,7 +187,7 @@ class DCGAN(object):
         self.d_sum = tf.summary.merge(
             [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
         self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
-
+        
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , 100))
         #sample_files = data[0:self.sample_size]
 
@@ -183,6 +196,8 @@ class DCGAN(object):
 
         counter = 1
         start_time = time.time()
+        
+        # attempt to load checkpoint
         if self.load(self.checkpoint_dir):
             print('Existing checkpoint found')
         else:
@@ -208,7 +223,7 @@ class DCGAN(object):
                 #print(batch_images[0])
                 #print(np.min(batch_images[0]))
                 #print(np.max(batch_images[0]))
-
+                # get random z to feed into network
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 # Update D network
@@ -225,7 +240,8 @@ class DCGAN(object):
                 _, summary_str = self.sess.run([g_optim, self.g_sum],
                     feed_dict={ self.z: batch_z, self.is_training: True })
                 self.writer.add_summary(summary_str, counter)
-
+                
+                # calculate the error
                 errD_fake = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
                 errD_real = self.d_loss_real.eval({self.images: batch_images, self.is_training: False})
                 errG = self.g_loss.eval({self.z: batch_z, self.is_training: False})
@@ -249,6 +265,14 @@ class DCGAN(object):
 
 
     def discriminator(self, image, reuse=False):
+        '''
+        This function creates a Discriminator network, which takes an input image and returns the probability of if it is real
+        or fake. Functions from model_funcs are used.
+        Input Args:
+        image - tensor of shape [batch_size, 64, 64, 3]
+        Returns:
+        h4 - tensor of shape [64, 2]
+        '''
         with tf.variable_scope("discriminator") as scope:
             if reuse:
                 scope.reuse_variables()
@@ -261,6 +285,14 @@ class DCGAN(object):
 
 
     def generator(self, z):
+        '''
+        This function creates a Generator network, which takes an input matrix and returns a generated image. 
+        Functions from model_funcs are used.
+        Input Args:
+        z - tensor of shape [None, 100]
+        Returns:
+        output - tensor of shape [None, 64, 64, 3]
+        '''
         with tf.variable_scope("generator") as scope:
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
     
@@ -402,6 +434,7 @@ class DCGAN(object):
         return new_image
 
     def save(self, checkpoint_dir, step):
+        # saves checkpoint for later
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
 
@@ -410,6 +443,7 @@ class DCGAN(object):
                         global_step=step)
 
     def load(self, checkpoint_dir):
+        # Loads pre-saved checkpoint
         print(" [*] Reading checkpoints...")
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
@@ -422,7 +456,6 @@ class DCGAN(object):
 
     def complete(self, config):
         def make_dir(name):
-            # Works on python 2.7, where exist_ok arg to makedirs isn't available.
             p = os.path.join(config.outDir, name)
             if not os.path.exists(p):
                 os.makedirs(p)
