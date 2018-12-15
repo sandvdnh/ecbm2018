@@ -408,7 +408,7 @@ class DCGAN(object):
 
         #gradient descent back propogation to update input z
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
-        gvs = optimizer.compute_gradients(self.complete_loss, [z])
+        gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
         train_op = optimizer.apply_gradients(capped_gvs)
         zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
