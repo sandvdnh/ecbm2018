@@ -373,13 +373,13 @@ class DCGAN(object):
         #print('shape of z: ', z)
 
         #reshape images and masks to be compatible with output from generator
-        test_image = tf.convert_to_tensor(np.reshape(test_image,(1,64,64,3)), dtype=tf.float32)
+        test_image = np.reshape(test_image,(1,64,64,3))
         mask = np.reshape(mask,(1,64,64,3))
         masked_test = np.reshape(masked_test,(1,64,64,3))
 
         #change image, mask and learning rate to tensors
         #self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
-        self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
+        #self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
         #self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
 
         #generate weights for contextual loss
@@ -396,7 +396,7 @@ class DCGAN(object):
                     cumulative_sum = cumulative_sum/49
                     weight[:,i,j,:] = cumulative_sum
         #convert to tensor
-        self.weight = tf.convert_to_tensor(weight, dtype=tf.float32)
+        #self.weight = tf.convert_to_tensor(weight, dtype=tf.float32)
 
         #Define loss as sum of both types of loss
         #self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
@@ -421,6 +421,7 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
+                self.mask: weight[0]
                 self.z: z,
                 self.images: test_image,
                 self.is_training: False
