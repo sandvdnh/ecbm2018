@@ -470,7 +470,7 @@ class DCGAN(object):
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            self.saver.restore(self.sess, checkpoint_dir)
             return True
         else:
             return False
