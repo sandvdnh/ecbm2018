@@ -231,8 +231,9 @@ class DCGAN(object):
                 errG = self.g_loss.eval({self.z: batch_z, self.is_training: False})
 
                 counter += 1
-                print("Epoch: [{:2d}] [{:4d}/{:4d}] time: {:4.4f}, d_loss: {:.8f}, g_loss: {:.8f}".format(
-                    epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
+                if np.mod(counter, 60) == 0 or counter < 3:
+                    print("Epoch: [{:2d}] [{:4d}/{:4d}] time: {:4.4f}, d_loss: {:.8f}, g_loss: {:.8f}".format(
+                        epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
 
                 if np.mod(counter, 100) == 0:
                     samples = self.sess.run(
