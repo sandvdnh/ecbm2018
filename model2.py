@@ -9,15 +9,13 @@
 
 from __future__ import division
 import os
+from glob import glob
+import tensorflow as tf
 import time
 import math
 import itertools
-from glob import glob
-import tensorflow as tf
-
 from utils2 import *
 from model_funcs import *
-
 from utils import block_mask
 
 GENERATOR_F = 64
@@ -101,27 +99,19 @@ class DCGAN(object):
                 labels=tf.ones_like(self.D_)))
 
         self.d_loss = self.d_loss_real + self.d_loss_fake
-
-        #self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
-        #self.d_loss_sum = tf.summary.scalar("d_loss", self.d_loss)
-
         t_vars = tf.trainable_variables()
-
         self.d_vars = [var for var in t_vars if 'd_' in var.name]
         self.g_vars = [var for var in t_vars if 'g_' in var.name]
         
-        # save values
+        # save values 
+        # SAVER NOT FULLY WORKING
         self.saver = tf.train.Saver(max_to_keep=1)
 
         # Completion.
         self.mask = tf.placeholder(tf.float32, self.image_shape, name='mask')
-        #self.lowres_mask = tf.placeholder(tf.float32, self.lowres_shape, name='lowres_mask')
         self.contextual_loss = tf.reduce_sum(
             tf.contrib.layers.flatten(
                 tf.abs(tf.multiply(self.mask, self.G) - tf.multiply(self.mask, self.images))), 1)
-        #self.contextual_loss += tf.reduce_sum(
-        #    tf.contrib.layers.flatten(
-        #        tf.abs(tf.multiply(self.lowres_mask, self.lowres_G) - tf.multiply(self.lowres_mask, self.lowres_images))), 1)
         self.perceptual_loss = self.g_loss
         self.complete_loss = self.contextual_loss + self.lamda * self.perceptual_loss
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
