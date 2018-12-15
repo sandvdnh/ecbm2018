@@ -469,6 +469,7 @@ class DCGAN(object):
         print(" [*] Reading checkpoints...")
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        tf.train.load_checkpoint(checkpoint_dir + 'DCGAN.model')
         if ckpt and ckpt.model_checkpoint_path:
             self.saver.restore(self.sess, checkpoint_dir)
             return True
