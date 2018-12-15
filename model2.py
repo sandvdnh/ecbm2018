@@ -434,13 +434,16 @@ class DCGAN(object):
             loss, g, Gz = self.sess.run(run, feed_dict=fd)
             z = z - g[0]*0.001
 
-        Gz = ((Gz + 1) / 2) * 255
-        save_images(np.reshape(Gz, (1, 64, 64, 3), [64, 64], os.path.join('samples', 'inpaint' + str(iterations) + '.png'))
+        #Gz = ((Gz + 1) / 2) * 255
+        save_images(
+                np.reshape(Gz, (1, 64, 64, 3)),
+                [64, 64],
+                os.path.join('samples', 'inpaint' + str(iterations) + '.png'))
         #rescale image Gz properly
         #crop out center and add it to test image
-        fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
+        fill = np.multiply(np.ones_like(self.mask) - self.mask, Gz)
+        print(masked_test.shape)
         new_image =  masked_test + fill
-
         return new_image
 
     def save(self, checkpoint_dir, step):
