@@ -363,7 +363,6 @@ class DCGAN(object):
 
         z = tf.get_variable(
                 'random_vector',
-                [100],
                 dtype = tf.float32,
                 initializer = tf.ones([100]))
         #self.z = z
