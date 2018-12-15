@@ -85,7 +85,7 @@ class DCGAN(object):
         #    [self.batch_size, self.lowres_size, self.lowres,
         #     self.lowres_size, self.lowres, self.c_dim]), [2, 4])
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-        self.z_sum = tf.summary.histogram("z", self.z)
+        #self.z_sum = tf.summary.histogram("z", self.z)
         
         # create Generator and Discriminators
         self.G = self.generator(self.z)
@@ -96,9 +96,9 @@ class DCGAN(object):
 
         self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
-        self.d_sum = tf.summary.histogram("d", self.D)
-        self.d__sum = tf.summary.histogram("d_", self.D_)
-        self.G_sum = tf.summary.image("G", self.G)
+        #self.d_sum = tf.summary.histogram("d", self.D)
+        #self.d__sum = tf.summary.histogram("d_", self.D_)
+        #self.G_sum = tf.summary.image("G", self.G)
         
         # loss functions
         self.d_loss_real = tf.reduce_mean(
@@ -111,13 +111,13 @@ class DCGAN(object):
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_,
                                                     labels=tf.ones_like(self.D_)))
 
-        self.d_loss_real_sum = tf.summary.scalar("d_loss_real", self.d_loss_real)
-        self.d_loss_fake_sum = tf.summary.scalar("d_loss_fake", self.d_loss_fake)
+        #self.d_loss_real_sum = tf.summary.scalar("d_loss_real", self.d_loss_real)
+        #self.d_loss_fake_sum = tf.summary.scalar("d_loss_fake", self.d_loss_fake)
 
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
-        self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
-        self.d_loss_sum = tf.summary.scalar("d_loss", self.d_loss)
+        #self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
+        #self.d_loss_sum = tf.summary.scalar("d_loss", self.d_loss)
 
         t_vars = tf.trainable_variables()
 
@@ -162,10 +162,10 @@ class DCGAN(object):
         except:
             tf.initialize_all_variables().run()
 
-        self.g_sum = tf.summary.merge(
-            [self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
-        self.d_sum = tf.summary.merge(
-            [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
+        #self.g_sum = tf.summary.merge(
+        #    [self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
+        #self.d_sum = tf.summary.merge(
+        #       [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
         #self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
         
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , 100))
@@ -192,19 +192,16 @@ class DCGAN(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 # Update D network
-                _, summary_str = self.sess.run([d_optim, self.d_sum],
+                d_optim_ = self.sess.run([d_optim, self.d_sum],
                     feed_dict={ self.images: batch_images, self.z: batch_z, self.is_training: True })
-                #self.writer.add_summary(summary_str, counter)
 
                 # Update G network
-                _, summary_str = self.sess.run([g_optim, self.g_sum],
+                g_optim_ = self.sess.run([g_optim, self.g_sum],
                     feed_dict={ self.z: batch_z, self.is_training: True })
-                #self.writer.add_summary(summary_str, counter)
 
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                _, summary_str = self.sess.run([g_optim, self.g_sum],
+                g_optim_ = self.sess.run([g_optim, self.g_sum],
                     feed_dict={ self.z: batch_z, self.is_training: True })
-                #self.writer.add_summary(summary_str, counter)
                 
                 # calculate the error
                 errD_fake = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
