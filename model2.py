@@ -420,8 +420,8 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
-                self.z: z
-                self.images: test_image
+                self.z: z,
+                self.images: test_image,
                 self.is_training: False
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
