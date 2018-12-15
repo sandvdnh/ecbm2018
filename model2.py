@@ -190,6 +190,7 @@ class DCGAN(object):
         batches, batch_idxs = get_batches(self.batch_size, self.dataset)
 
         for epoch in range(config.epoch):
+            print('EPOCHS: ', epoch, ' / ', config.epoch)
         #    data = dataset_files(config.dataset)
         #    batch_idxs = min(len(data), config.train_size) // self.batch_size
 
@@ -202,9 +203,7 @@ class DCGAN(object):
                 #print(batch_images[0])
                 #print(np.min(batch_images[0]))
                 #print(np.max(batch_images[0]))
-                for i in range(batch_idxs):
-                    print('yielding: ', i, idx)
-                    batch_images = next(batches).astype(np.float32) / 255 * 2 - 1
+                batch_images = next(batches).astype(np.float32) / 255 * 2 - 1
                 #print(np.mean(batch_images[0]))
                 #print(batch_images[0])
                 #print(np.min(batch_images[0]))
