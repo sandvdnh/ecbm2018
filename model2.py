@@ -166,7 +166,7 @@ class DCGAN(object):
             [self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
         self.d_sum = tf.summary.merge(
             [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
-        self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
+        #self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
         
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , 100))
         #sample_files = data[0:self.sample_size]
@@ -194,17 +194,17 @@ class DCGAN(object):
                 # Update D network
                 _, summary_str = self.sess.run([d_optim, self.d_sum],
                     feed_dict={ self.images: batch_images, self.z: batch_z, self.is_training: True })
-                self.writer.add_summary(summary_str, counter)
+                #self.writer.add_summary(summary_str, counter)
 
                 # Update G network
                 _, summary_str = self.sess.run([g_optim, self.g_sum],
                     feed_dict={ self.z: batch_z, self.is_training: True })
-                self.writer.add_summary(summary_str, counter)
+                #self.writer.add_summary(summary_str, counter)
 
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                 _, summary_str = self.sess.run([g_optim, self.g_sum],
                     feed_dict={ self.z: batch_z, self.is_training: True })
-                self.writer.add_summary(summary_str, counter)
+                #self.writer.add_summary(summary_str, counter)
                 
                 # calculate the error
                 errD_fake = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
