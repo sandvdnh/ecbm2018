@@ -433,8 +433,9 @@ class DCGAN(object):
             run = [self.complete_loss, self.capped_gradient, self.G]
             loss, g, Gz = self.sess.run(run, feed_dict=fd)
             z = z - g[0]*0.001
+            z = np.clip(z, -1, 1)
 
-        #Gz = ((Gz + 1) / 2) * 255
+        Gz = ((Gz + 1) / 2) * 255
         save_images(
                 np.reshape(Gz, (1, 64, 64, 3)),
                 [64, 64],
