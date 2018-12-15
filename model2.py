@@ -412,6 +412,7 @@ class DCGAN(object):
         #gradient descent back propogation to update input z
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+        self.batch_size = 1
         z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32)
         tf.global_variables_initializer().run()
         for i in range(iterations):
