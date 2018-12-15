@@ -375,7 +375,7 @@ class DCGAN(object):
         #change image, mask and learning rate to tensors
         #self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
         self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
-        self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
+        #self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
 
         #generate weights for contextual loss
         weight = np.zeros_like(mask)
@@ -405,7 +405,7 @@ class DCGAN(object):
         #self.gradients = tf.gradients(self.complete_loss,self.z)
 
         #gradient descent back propogation to update input z
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
         gvs = optimizer.compute_gradients(self.complete_loss, [z])
         capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
         train_op = optimizer.apply_gradients(capped_gvs)
