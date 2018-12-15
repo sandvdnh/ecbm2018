@@ -398,9 +398,9 @@ class DCGAN(object):
         #Define loss as sum of both types of loss
         self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
             self.weight,
-            tf.multiply(self.generator(z, reuse=True), self.mask) - tf.multiply(test_image, self.mask))))
+            tf.multiply(self.G, self.mask) - tf.multiply(test_image, self.mask))))
         #self.perceptual_loss = self.g_loss
-        self.perceptual_loss, _ = self.discriminator(test_image, reuse=True)
+        self.perceptual_loss, _ = self.D_
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
@@ -420,6 +420,8 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
+                self.z: z
+                self.images: test_image
                 self.is_training: False
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
