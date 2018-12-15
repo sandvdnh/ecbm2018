@@ -191,34 +191,40 @@ class DCGAN(object):
                 batch_images = next(batches).astype(np.float32) / 255 * 2 - 1
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
-                # Update D network
-                d_optim_ = self.sess.run([d_optim],
-                    feed_dict={self.images: batch_images, self.z: batch_z, self.is_training: True })
+                # apply gradients to the discriminator
+                d_optim_ = self.sess.run(
+                        d_optim,
+                        feed_dict={self.images: batch_images, self.z: batch_z, self.is_training: True})
 
-                # Update G network
-                g_optim_ = self.sess.run([g_optim],
-                    feed_dict={self.z: batch_z, self.is_training: True})
+                # apply gradients to the generator
+                g_optim_ = self.sess.run(
+                        g_optim,
+                        feed_dict={self.z: batch_z, self.is_training: True})
 
-                # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                g_optim_ = self.sess.run([g_optim],
-                    feed_dict={self.z: batch_z, self.is_training: True})
+                # g_optim is often run twice, to prevent the discriminator error to go to zero too fast.
+                g_optim_ = self.sess.run(
+                        g_optim,
+                        feed_dict={self.z: batch_z, self.is_training: True})
                 
-                # calculate the error
-                errD_fake = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
-                errD_real = self.d_loss_real.eval({self.images: batch_images, self.is_training: False})
-                errG = self.g_loss.eval({self.z: batch_z, self.is_training: False})
+                # Calculate the losses to print them to the screen
+                error_G = self.g_loss.eval({self.z: batch_z, self.is_training: False})
+                error_D_1 = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
+                error_D_2 = self.d_loss_real.eval({self.images: batch_images, self.is_training: False})
 
                 counter += 1
                 if np.mod(counter, 1) == 0 or counter < 3:
                     print("epoch: {:2d}/{:2d} || iteration: {:4d}/{:4d} || time: {:4.4f} || discriminator loss: {:.8f} || generator loss: {:.8f}".format(
-                        epoch, config.epoch, idx, batch_idxs, time.time() - start_time, errD_fake+errD_real, errG))
+                        epoch,
+                        config.epoch,
+                        idx,
+                        batch_idxs,
+                        time.time() - start_time,
+                        error_D_1 + error_D_2,
+                        error_G))
 
                 if np.mod(counter, 100) == 0:
-                    samples = self.sess.run(
-                        self.G,
-                        feed_dict={self.z: sample_z, self.is_training: False}
-                    )
-                    save_images(samples, [8, 8],
+                    samples = self.sess.run(self.G, feed_dict={self.z: sample_z, self.is_training: False})
+                    save_images(samples[0], [8, 8],
                                 './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
                     print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(0, 0))
 
