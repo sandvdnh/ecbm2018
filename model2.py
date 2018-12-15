@@ -162,7 +162,7 @@ class DCGAN(object):
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
         self.capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
-        self.train_op = optimizer.apply_gradients([(capped_gradient, self.z)])
+        self.train_op = optimizer.apply_gradients([(self.capped_gradient, self.z)])
 
     def train(self, config):
         # Function to train the DCGAN.  Both the discriminator and generator are trained concurrently.
