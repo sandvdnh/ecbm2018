@@ -2,7 +2,7 @@
 
 How to run the code:
 
-Run Project_Notebook.ipynb to run code and train DCGAN
+Run Project_Notebook.ipynb to train DCGAN and implement inpainting
 
 
 ## Function of each file:
