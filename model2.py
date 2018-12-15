@@ -20,8 +20,6 @@ from utils2 import *
 from model_funcs import *
 
 from utils import block_mask
-from utils import random_mask
-from utils import half_missing_mask
 
 #SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
 #
