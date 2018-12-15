@@ -430,14 +430,14 @@ class DCGAN(object):
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
-            run = [self.complete_loss, self.capped_gradient]
-            loss, g = self.sess.run(run, feed_dict=fd)
-            z = z - g[0]*0.0001
-            print(z)
+            run = [self.complete_loss, self.capped_gradient, self.G]
+            loss, g, Gz = self.sess.run(run, feed_dict=fd)
+            z = z - g[0]*0.001
 
-
-        #rescale image Gz properly
         Gz = ((Gz + 1) / 2) * 255
+        plt.imshow(Gz)
+        plt.savefig('blabla.png')
+        #rescale image Gz properly
         #crop out center and add it to test image
         fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
         new_image =  masked_test + fill
