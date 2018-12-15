@@ -297,10 +297,10 @@ class DCGAN(object):
         with tf.variable_scope("generator") as scope:
             if reuse:
                 scope.reuse_variables()
-            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
+            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', with_w=True)
     
             hs = [None]
-            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 8])
+            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
             hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
 
             out1, _, _ = conv2d_transpose(
@@ -352,11 +352,6 @@ class DCGAN(object):
         outputs- predicted images to match masked images. traverses a manifold using back-propogation
         '''
 
-        #checkpoint_dir = './checkpoint/DCGAN.model-41002'
-        if self.load(checkpoint_dir):
-            print('loaded successfully')
-        else:
-            print('DID NOT LOAD MODEL')
         #apply mask to image and keep mask for later use
         #self.image = test_image
 
@@ -417,10 +412,10 @@ class DCGAN(object):
         #gradient descent back propogation to update input z
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-        #config.batch_size = 1
+        FLAGS.batch_size = 1
         self.batch_size = 1
         z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32)
-        #tf.global_variables_initializer().run()
+        tf.global_variables_initializer().run()
         for i in range(iterations):
             #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
             fd = {
@@ -435,24 +430,18 @@ class DCGAN(object):
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
-            run = [self.complete_loss, self.capped_gradient, self.G]
-            loss, g, Gz = self.sess.run(run, feed_dict=fd)
-            z = z - g[0]*0.0001
-            z = np.clip(z, -1, 1)
+            run = [self.complete_loss, self.capped_gradient]
+            loss, g = self.sess.run(run, feed_dict=fd)
+            z = z - g[0]*learning_rate
+            print(z)
 
-        print(z)
-        Gz = ((Gz + 1) / 2) * 255
-        print(np.mean(Gz))
-        print(np.min(Gz))
-        print(np.max(Gz))
-        save_images(
-                np.reshape(Gz, (1, 64, 64, 3)),
-                [1, 1],
-                os.path.join('samples', 'inpaint' + str(iterations) + '.png'))
+
         #rescale image Gz properly
+        Gz = ((Gz + 1) / 2) * 255
         #crop out center and add it to test image
-        fill = np.multiply(np.ones_like(self.mask) - self.mask, Gz)
+        fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
         new_image =  masked_test + fill
+
         return new_image
 
     def save(self, checkpoint_dir, step):
@@ -465,10 +454,8 @@ class DCGAN(object):
                         global_step=step)
 
     def load(self, checkpoint_dir):
-        #print(" [*] Reading checkpoints...")
-
-        #tf.train.load_checkpoint(checkpoint_dir)
-        #return True
+        # Loads pre-saved checkpoint
+        checkpoint_dir = './checkpoint/'
         print(" [*] Reading checkpoints...")
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
@@ -477,6 +464,7 @@ class DCGAN(object):
             return True
         else:
             return False
+
 
     def complete(self, config):
         def make_dir(name):
