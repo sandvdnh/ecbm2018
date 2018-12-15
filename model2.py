@@ -352,6 +352,8 @@ class DCGAN(object):
         outputs- predicted images to match masked images. traverses a manifold using back-propogation
         '''
 
+        checkpoint_dir = './checkpoint_good/'
+        self.load(checkpoint_dir)
         #apply mask to image and keep mask for later use
         #self.image = test_image
 
@@ -435,7 +437,10 @@ class DCGAN(object):
             z = z - g[0]*0.001
             z = np.clip(z, -1, 1)
 
-        Gz = ((Gz + 1) / 2) * 255
+        #Gz = ((Gz + 1) / 2) * 255
+        print(np.mean(Gz))
+        print(np.min(Gz))
+        print(np.max(Gz))
         save_images(
                 np.reshape(Gz, (1, 64, 64, 3)),
                 [64, 64],
@@ -443,7 +448,6 @@ class DCGAN(object):
         #rescale image Gz properly
         #crop out center and add it to test image
         fill = np.multiply(np.ones_like(self.mask) - self.mask, Gz)
-        print(masked_test.shape)
         new_image =  masked_test + fill
         return new_image
 
@@ -458,7 +462,6 @@ class DCGAN(object):
 
     def load(self, checkpoint_dir):
         # Loads pre-saved checkpoint
-        checkpoint_dir = './checkpoint_good/'
         print(" [*] Reading checkpoints...")
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
