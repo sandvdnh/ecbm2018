@@ -410,7 +410,7 @@ class DCGAN(object):
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
         capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
-        train_op = optimizer.apply_gradients((capped_gradient, z))
+        train_op = optimizer.apply_gradients([(capped_gradient, z)])
         #zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
         tf.global_variables_initializer().run()
         for i in range(iterations):
