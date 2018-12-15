@@ -16,6 +16,10 @@ from ops2 import *
 from utils2 import *
 from model_funcs import *
 
+from utils import block_mask
+from utils import random_mask
+from utils import half_missing_mask
+
 #SUPPORTED_EXTENSIONS = ["png", "jpg", "jpeg"]
 #
 #def dataset_files(root):
@@ -253,6 +257,7 @@ class DCGAN(object):
             h4 = linear(tf.reshape(h3, [-1, 8192]), 1, 'd_h4_lin')
             return tf.nn.sigmoid(h4), h4
 
+
     def generator(self, z):
         with tf.variable_scope("generator") as scope:
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
@@ -293,6 +298,106 @@ class DCGAN(object):
                     )
             return tf.nn.tanh(out4)
 
+    def inpainting(self,
+            learning_rate,
+            test_image,
+            iterations,
+            mask_choice='block_mask',
+            lamda=0.002):
+        '''
+        Test of Semantic inpainting
+        this function applies a mask
+        to the input image and then produces a visually similar image to the original
+
+        uses functions from utils
+        Input Arguments
+        test- a single test image
+        Outputs
+        outputs- predicted images to match masked images. traverses a manifold using back-propogation
+        '''
+
+        #apply mask to image and keep mask for later use
+        #self.image = test_image
+
+        # MAKE SURE SELF.IMAGES HAS THE CORRECT SHAPE
+
+        if mask_choice == 'block_mask':
+            masked_test, mask = block_mask(self.images[0],30)
+        elif mask_choice == 'random_mask':
+            masked_test, mask = random_mask(self.images[0],0.6)
+        elif mask_choice == 'half_missing_mask':
+            masked_test, mask = half_missing_mask(self.images[0])
+        else:
+            print('incorrect mask choice')
+
+
+        #reshape images and masks to be compatible with output from generator
+        test_image = np.reshape(test_image,(1,64,64,3))
+        mask = np.reshape(mask,(1,64,64,3))
+        masked_test = np.reshape(masked_test,(1,64,64,3))
+
+        #change image, mask and learning rate to tensors
+        #self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
+        self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
+        self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
+
+
+
+        #generate random z as a changeable variable
+
+        #generate weights for contextual loss
+        weight = np.zeros_like(mask)
+        n = weight.shape[1]
+        for i in range(n):
+            for j in range(n):
+                if (j-4) > 0 and (j+4) < (n - 4) and (i-4) >0 and i+4 < (n - 4) and mask[0,i,j,0] ==1:
+                    cumulative_sum = 0;
+                    for k in range(-3,3):
+                        for l in range(-3,3):
+                            if mask[0,i+k,l+j,0] ==0 and l!=0 and k!=0:
+                                cumulative_sum = cumulative_sum + 1
+                    cumulative_sum = cumulative_sum/49
+                    weight[:,i,j,:] = cumulative_sum
+        #convert to tensor
+        self.weight = tf.convert_to_tensor(weight, dtype=tf.float32)
+
+        #Define loss as sum of both types of loss
+        self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
+            self.weight,
+            tf.multiply(self.G(self.z), self.mask) - tf.multiply(self.images[0], self.mask))))
+        #self.perceptual_loss = self.g_loss
+        self.perceptual_loss, _ = self.discriminator
+        self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
+
+        #define optimization function (gradient descent)
+        self.gradients = tf.gradients(self.complete_loss,self.z)
+
+        #gradient descent back propogation to update input z
+        tf.global_variables_initializer().run()
+        zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
+        for i in range(iterations):
+            #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
+            fd = {
+                self.z: zhats,
+                #self.mask: mask,
+                #self.lowres_mask: lowres_mask,
+                self.images: np.reshape(test_image, (1, 64, 64, 3)),
+                self.is_training: False
+            }
+            #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
+            #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
+            run = [self.complete_loss, self.gradients]
+            loss, g = self.sess.run(run, feed_dict=fd)
+            zhats = zhats - g[0]*learning_rate
+
+
+        #rescale image Gz properly
+        Gz = ((Gz + 1) / 2) * 255
+        #crop out center and add it to test image
+        fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
+        new_image =  masked_test + fill
+
+        return new_image
 
     def save(self, checkpoint_dir, step):
         if not os.path.exists(checkpoint_dir):
