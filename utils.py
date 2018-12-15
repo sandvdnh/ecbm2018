@@ -33,9 +33,7 @@ def block_mask(data,block_size):
 	
 	else:
 		#get shape of data
-		M = data.shape[0]
-		N = data.shape[3]
-
+                M, N = 64
 		#create mask of ones of the same size
 		mask = np.ones((M,M,3,1))
 		
