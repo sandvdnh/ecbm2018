@@ -36,7 +36,7 @@ if not os.path.exists(FLAGS.sample_dir):
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 get_images, _ = get_batches(10, 'celeba')
-images = next(get_images).astype(np.float32)
+images = next(get_images).astype(np.float32) / 255 * 2 - 1
 with tf.Session(config=config) as sess:
     dcgan = DCGAN(sess, batch_size=FLAGS.batch_size, checkpoint_dir=FLAGS.checkpoint_dir)
     dcgan.inpainting(images[0], 5, mask_choice = 'block_mask')
