@@ -161,6 +161,7 @@ class DCGAN(object):
         self.complete_loss = self.contextual_loss + self.lam*self.perceptual_loss
         self.grad_complete_loss = tf.gradients(self.complete_loss, self.z)
         self.capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
         self.train_op = optimizer.apply_gradients([(capped_gradient, self.z)])
 
     def train(self, config):
@@ -409,7 +410,6 @@ class DCGAN(object):
         #self.gradients = tf.gradients(self.complete_loss,self.z)
 
         #gradient descent back propogation to update input z
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
         #zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
