@@ -153,12 +153,13 @@ def get_batches_celeba(batch_size, preprocessed = True, use_preprocessed = True)
     if use_preprocessed:
         filenames = []
         filenames += [f for f in listdir(preprocessed_dir) if isfile(join(preprocessed_dir, f))]
-        for i in range(n_batches):
-            batch = np.zeros((batch_size, 64, 64, 3))
-            for j in range(batch_size):
-                x = plt.imread(os.path.join(preprocessed_dir, filenames[i * batch_size + j]))
-                batch[j] = x.copy()
-            yield batch
+        while True:
+            for i in range(n_batches):
+                batch = np.zeros((batch_size, 64, 64, 3))
+                for j in range(batch_size):
+                    x = plt.imread(os.path.join(preprocessed_dir, filenames[i * batch_size + j]))
+                    batch[j] = x.copy()
+                yield batch
     else:
         while True:
             for i in range(n_batches):
