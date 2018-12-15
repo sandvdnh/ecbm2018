@@ -203,7 +203,7 @@ class DCGAN(object):
                 #print(np.min(batch_images[0]))
                 #print(np.max(batch_images[0]))
                 for i in range(batch_idxs):
-                    print('yielding')
+                    print('yielding: ', i, idx)
                     batch_images = next(batches).astype(np.float32) / 255 * 2 - 1
                 #print(np.mean(batch_images[0]))
                 #print(batch_images[0])
