@@ -333,7 +333,6 @@ class DCGAN(object):
             return tf.nn.tanh(out4)
 
     def inpainting(self,
-            learning_rate,
             test_image,
             iterations,
             mask_choice='block_mask',
