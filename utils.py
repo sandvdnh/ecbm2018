@@ -30,7 +30,7 @@ def block_mask(data,block_size):
         return 0
     else:
         #get shape of data
-        M, N = 64
+        M, N = 64, 64
         #create mask of ones of the same size
         mask = np.ones((M,M,3,1))
         #find starting index value for the center block
