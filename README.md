@@ -1,10 +1,11 @@
-# ecbm2018 Final project ECBM4040
+# Final project ECBM4040
 
 How to run the code:
+
 Run Project_Notebook.ipynb to run code and train DCGAN
 
 
-Function of each file:
+## Function of each file:
 
 Inpainting_test.ipynb: Used to test inpainting function with un-trained generator
 
@@ -21,7 +22,7 @@ utils: mask and crop functions are located her
 model.py: contains all functions neccesary for running DCGAN and image inpainting
 
 
-Data Set locations:
+## Data Set locations:
 Run Project_notebook.ipynb should automatically download the datasets and has a link to them.
 Those links are also posted below:
 
