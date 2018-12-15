@@ -352,7 +352,7 @@ class DCGAN(object):
         outputs- predicted images to match masked images. traverses a manifold using back-propogation
         '''
 
-        checkpoint_dir = './checkpoint_good/'
+        checkpoint_dir = './checkpoint/'
         if self.load(checkpoint_dir):
             print('loaded successfully')
         else:
