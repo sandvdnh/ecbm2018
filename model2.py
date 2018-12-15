@@ -353,7 +353,10 @@ class DCGAN(object):
         '''
 
         checkpoint_dir = './checkpoint_good/'
-        self.load(checkpoint_dir)
+        if self.load(checkpoint_dir):
+            print('loaded successfully')
+        else:
+            print('DID NOT LOAD MODEL')
         #apply mask to image and keep mask for later use
         #self.image = test_image
 
@@ -465,7 +468,7 @@ class DCGAN(object):
         # Loads pre-saved checkpoint
         print(" [*] Reading checkpoints...")
 
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        ckpt = tf.train.get_checkpoint_state(os.path.join(checkpoint_dir, 'DCGAN.model'))
         if ckpt and ckpt.model_checkpoint_path:
             self.saver.restore(self.sess, ckpt.model_checkpoint_path)
             return True
