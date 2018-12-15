@@ -434,16 +434,17 @@ class DCGAN(object):
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
             run = [self.complete_loss, self.capped_gradient, self.G]
             loss, g, Gz = self.sess.run(run, feed_dict=fd)
-            z = z - g[0]*0.001
+            z = z - g[0]*0.0001
             z = np.clip(z, -1, 1)
 
+        print(z)
         Gz = ((Gz + 1) / 2) * 255
         print(np.mean(Gz))
         print(np.min(Gz))
         print(np.max(Gz))
         save_images(
                 np.reshape(Gz, (1, 64, 64, 3)),
-                [64, 64],
+                [1, 1],
                 os.path.join('samples', 'inpaint' + str(iterations) + '.png'))
         #rescale image Gz properly
         #crop out center and add it to test image
