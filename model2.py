@@ -364,7 +364,7 @@ class DCGAN(object):
         z = tf.get_variable(
                 'random_vector',
                 dtype = tf.float32,
-                initializer = tf.ones([100]))
+                initializer = tf.ones([1, 100]))
         #self.z = z
 
         #reshape images and masks to be compatible with output from generator
@@ -396,9 +396,9 @@ class DCGAN(object):
         #Define loss as sum of both types of loss
         self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
             self.weight,
-            tf.multiply(self.generator(z), self.mask) - tf.multiply(image, self.mask))))
+            tf.multiply(self.generator(z), self.mask) - tf.multiply(test_image, self.mask))))
         #self.perceptual_loss = self.g_loss
-        self.perceptual_loss, _ = self.discriminator(image)
+        self.perceptual_loss, _ = self.discriminator(test_image)
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
