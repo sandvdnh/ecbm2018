@@ -282,7 +282,7 @@ class DCGAN(object):
             return tf.nn.sigmoid(h4), h4
 
 
-    def generator(self, z):
+    def generator(self, z, reuse=False):
         '''
         This function creates a Generator network, which takes an input matrix and returns a generated image. 
         Functions from model_funcs are used.
@@ -396,9 +396,9 @@ class DCGAN(object):
         #Define loss as sum of both types of loss
         self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
             self.weight,
-            tf.multiply(self.generator(z), self.mask) - tf.multiply(test_image, self.mask))))
+            tf.multiply(self.generator(z, reuse=True), self.mask) - tf.multiply(test_image, self.mask))))
         #self.perceptual_loss = self.g_loss
-        self.perceptual_loss, _ = self.discriminator(test_image)
+        self.perceptual_loss, _ = self.discriminator(test_image, reuse=True)
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
