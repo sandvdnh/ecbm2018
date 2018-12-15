@@ -352,7 +352,7 @@ class DCGAN(object):
         outputs- predicted images to match masked images. traverses a manifold using back-propogation
         '''
 
-        checkpoint_dir = './checkpoint/DCGAN.model'
+        checkpoint_dir = './checkpoint/'
         if self.load(checkpoint_dir):
             print('loaded successfully')
         else:
@@ -468,13 +468,14 @@ class DCGAN(object):
         # Loads pre-saved checkpoint
         print(" [*] Reading checkpoints...")
 
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        #ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         tf.train.load_checkpoint(checkpoint_dir + 'DCGAN.model')
-        if ckpt and ckpt.model_checkpoint_path:
-            self.saver.restore(self.sess, checkpoint_dir)
-            return True
-        else:
-            return False
+        return True
+        #if ckpt and ckpt.model_checkpoint_path:
+        #    self.saver.restore(self.sess, checkpoint_dir)
+        #    return True
+        #else:
+        #    return False
 
 
     def complete(self, config):
