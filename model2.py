@@ -64,14 +64,11 @@ class DCGAN(object):
         self.d_bns = [
             batch_norm(name='d_bn{}'.format(i,)) for i in range(4)]
 
-        log_size = 6 # log_2(64)
         self.g_bns = [
-            batch_norm(name='g_bn{}'.format(i,)) for i in range(log_size)]
+            batch_norm(name='g_bn{}'.format(i,)) for i in range(6)]
 
         self.checkpoint_dir = checkpoint_dir
         self.build_model()
-
-        #self.model_name = "DCGAN.model"
 
     def build_model(self):
         '''
@@ -81,38 +78,27 @@ class DCGAN(object):
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.images = tf.placeholder(
             tf.float32, [None] + self.image_shape, name='real_images')
-        #self.lowres_images = tf.reduce_mean(tf.reshape(self.images,
-        #    [self.batch_size, self.lowres_size, self.lowres,
-        #     self.lowres_size, self.lowres, self.c_dim]), [2, 4])
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-        #self.z_sum = tf.summary.histogram("z", self.z)
         
         # create Generator and Discriminators
         self.G = self.generator(self.z)
-        #self.lowres_G = tf.reduce_mean(tf.reshape(self.G,
-        #    [self.batch_size, self.lowres_size, self.lowres,
-        #     self.lowres_size, self.lowres, self.c_dim]), [2, 4])
         self.D, self.D_logits = self.discriminator(self.images)
 
         self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
-        #self.d_sum = tf.summary.histogram("d", self.D)
-        #self.d__sum = tf.summary.histogram("d_", self.D_)
-        #self.G_sum = tf.summary.image("G", self.G)
-        
         # loss functions
         self.d_loss_real = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits,
-                                                    labels=tf.ones_like(self.D)))
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                logits=self.D_logits,
+                labels=tf.ones_like(self.D)))
         self.d_loss_fake = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_,
-                                                    labels=tf.zeros_like(self.D_)))
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                logits=self.D_logits_,
+                labels=tf.zeros_like(self.D_)))
         self.g_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_,
-                                                    labels=tf.ones_like(self.D_)))
-
-        #self.d_loss_real_sum = tf.summary.scalar("d_loss_real", self.d_loss_real)
-        #self.d_loss_fake_sum = tf.summary.scalar("d_loss_fake", self.d_loss_fake)
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                logits=self.D_logits_,
+                labels=tf.ones_like(self.D_)))
 
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
@@ -144,11 +130,9 @@ class DCGAN(object):
         #self.train_op = optimizer.apply_gradients([(self.capped_gradient, self.z)])
 
     def train(self, config):
-        # Function to train the DCGAN.  Both the discriminator and generator are trained concurrently.
-        
-        #data = dataset_files(config.dataset)
-        #np.random.shuffle(data)
-        #assert(len(data) > 0)
+        '''
+        Function which trains the generator and discriminator
+        '''
         
         # perform optimization
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1).minimize(
@@ -161,19 +145,7 @@ class DCGAN(object):
             tf.global_variables_initializer().run()
         except:
             tf.initialize_all_variables().run()
-
-        #self.g_sum = tf.summary.merge(
-        #    [self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
-        #self.d_sum = tf.summary.merge(
-        #       [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
-        #self.writer = tf.summary.FileWriter("./logs", self.sess.graph)
-        
         sample_z = np.random.uniform(-1, 1, size=(self.sample_size , 100))
-        #sample_files = data[0:self.sample_size]
-
-        #sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop) for sample_file in sample_files]
-        #sample_images = np.array(sample).astype(np.float32)
-
         counter = 1
         start_time = time.time()
         
@@ -212,6 +184,7 @@ class DCGAN(object):
                 error_D_2 = self.d_loss_real.eval({self.images: batch_images, self.is_training: False})
 
                 counter += 1
+                # print out status every n number of iterations
                 if np.mod(counter, 1) == 0 or counter < 3:
                     print("epoch: {:2d}/{:2d} || iteration: {:4d}/{:4d} || time: {:4.4f} || discriminator loss: {:.8f} || generator loss: {:.8f}".format(
                         epoch,
@@ -222,13 +195,16 @@ class DCGAN(object):
                         error_D_1 + error_D_2,
                         error_G))
 
+                # save samples every 100 iterations, to observe the improvements of the generator
+                # to generate realistic faces
                 if np.mod(counter, 100) == 0:
                     samples = self.sess.run(self.G, feed_dict={self.z: sample_z, self.is_training: False})
                     save_images(samples[0], [8, 8],
                                 './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
                     print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(0, 0))
 
-                if np.mod(counter, 500) == 2:
+                # save checkpoint every 400 iterations
+                if np.mod(counter, 400) == 2:
                     self.save(config.checkpoint_dir, counter)
 
 
