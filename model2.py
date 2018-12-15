@@ -292,6 +292,8 @@ class DCGAN(object):
         output - tensor of shape [None, 64, 64, 3]
         '''
         with tf.variable_scope("generator") as scope:
+            if reuse:
+                scope.reuse_variables()
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 8 * 4 * 4, 'g_h0_lin', with_w=True)
     
             hs = [None]
