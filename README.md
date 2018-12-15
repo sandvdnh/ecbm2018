@@ -26,11 +26,11 @@ model.py: contains all functions neccesary for running DCGAN and image inpaintin
 Run Project_notebook.ipynb should automatically download the datasets and has a link to them.
 Those links are also posted below:
 
-celeba:
+celeba: https://www.kaggle.com/jessicali9530/celeba-dataset
 
 SVHN: http://ufldl.stanford.edu/housenumbers/
 
-cars:
+cars: https://ai.stanford.edu/~jkrause/cars/car_dataset.html
 
 
 
