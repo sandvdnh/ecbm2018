@@ -54,7 +54,7 @@ class DCGAN:
         
     
     
-    def inpainting(self,learning_rate,test_image,iterations,lamda=0.002):
+    def inpainting(self,learning_rate,test_image,iterations,mask_choice='block_mask',lamda=0.002):
         '''
         Test of Semantic inpainting
         this function applies a mask
@@ -74,23 +74,52 @@ class DCGAN:
         
         #apply mask to image and keep mask for later use
         self.image = test_image
-        masked_test, mask = block_mask(self.image,30)
+        
+        if mask_choice == 'block_mask':
+            masked_test, mask = block_mask(self.image,30)
+        elif mask_choice == 'random_mask':
+            masked_test, mask = random_mask(self.image,0.6)
+        elif mask_choice == 'half_missing_mask':
+            masked_test, mask = half_missing_mask(self.image)
+        else:
+            print('incorrect mask choice')
+            
+        
+        #reshape images and masks to be compatible with output from generator
         test_image = np.reshape(test_image,(1,64,64,3))
         mask = np.reshape(mask,(1,64,64,3))
         masked_test = np.reshape(masked_test,(1,64,64,3))
         
+        #change image, mask and learning rate to tensors
         self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
         self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
         self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
         
-        #self.mask = mask
         
-        #generate random z as a changeable variable 
-        #self.z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32) 
+        
+        #generate random z as a changeable variable  
         self.z = tf.random_uniform([1,100],minval=-1,maxval=1,dtype=tf.float32,seed=None,name='z')
        
+        #generate weights for contextual loss
+        weight = np.zeros_like(mask)
+        n = weight.shape[1]
+        for i in range(n):
+            for j in range(n):
+                if (j-4) > 0 and (j+4) < (n - 4) and (i-4) >0 and i+4 < (n - 4) and mask[0,i,j,0] ==1:
+                    cumulative_sum = 0;
+                    for k in range(-3,3):
+                        for l in range(-3,3):
+                            if mask[0,i+k,l+j,0] ==0 and l!=0 and k!=0:
+                                cumulative_sum = cumulative_sum + 1
+                    cumulative_sum = cumulative_sum/49
+                    weight[:,i,j,:] = cumulative_sum
+        #convert to tensor
+        self.weight = tf.convert_to_tensor(weight,dtype=tf.float32)
+             
+               
+            
         #Define loss as sum of both types of loss
-        self.weighted_context_loss = tf.reduce_sum( tf.abs(tf.multiply(self.generator(self.z),self.mask) - tf.multiply(self.image,self.mask) ) )
+        self.weighted_context_loss = tf.reduce_sum( tf.abs( tf.multiply(self.weight ,   tf.multiply(self.generator(self.z),self.mask) - tf.multiply(self.image,self.mask) )    ) )
         self.perceptual_loss = self.g_loss 
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
         
