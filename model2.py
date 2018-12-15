@@ -364,6 +364,12 @@ class DCGAN(object):
         else:
             print('incorrect mask choice')
 
+        z = tf.get_variable(
+                'random_vector',
+                [100],
+                dtype = tf.float32,
+                initializer = tf.ones([100]))
+        #self.z = z
 
         #reshape images and masks to be compatible with output from generator
         test_image = np.reshape(test_image,(1,64,64,3))
@@ -374,10 +380,6 @@ class DCGAN(object):
         #self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
         self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
         self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
-
-
-
-        #generate random z as a changeable variable
 
         #generate weights for contextual loss
         weight = np.zeros_like(mask)
@@ -398,21 +400,25 @@ class DCGAN(object):
         #Define loss as sum of both types of loss
         self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
             self.weight,
-            tf.multiply(self.G(self.z), self.mask) - tf.multiply(self.images[0], self.mask))))
+            tf.multiply(self.G(z), self.mask) - tf.multiply(self.images[0], self.mask))))
         #self.perceptual_loss = self.g_loss
         self.perceptual_loss, _ = self.discriminator
         self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
-        self.gradients = tf.gradients(self.complete_loss,self.z)
+        #self.gradients = tf.gradients(self.complete_loss,self.z)
 
         #gradient descent back propogation to update input z
-        tf.global_variables_initializer().run()
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        gvs = optimizer.compute_gradients(self.complete_loss, [z])
+        capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+        train_op = optimizer.apply_gradients(capped_gvs)
         zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
+        tf.global_variables_initializer().run()
         for i in range(iterations):
             #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
             fd = {
-                self.z: zhats,
+                #self.z: zhats,
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 self.images: np.reshape(test_image, (1, 64, 64, 3)),
@@ -420,9 +426,10 @@ class DCGAN(object):
             }
             #run = [self.complete_loss, self.grad_complete_loss, self.G, self.lowres_G]
             #loss, g, G_imgs, lowres_G_imgs = self.sess.run(run, feed_dict=fd)
-            run = [self.complete_loss, self.gradients]
+            run = [self.complete_loss, train_op]
             loss, g = self.sess.run(run, feed_dict=fd)
-            zhats = zhats - g[0]*learning_rate
+            #zhats = zhats - g[0]*learning_rate
+            print(z)
 
 
         #rescale image Gz properly
@@ -444,6 +451,7 @@ class DCGAN(object):
 
     def load(self, checkpoint_dir):
         # Loads pre-saved checkpoint
+        checkpoint_dir = './checkpoint_good/'
         print(" [*] Reading checkpoints...")
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
