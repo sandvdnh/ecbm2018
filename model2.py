@@ -367,7 +367,6 @@ class DCGAN(object):
                 'random_vector',
                 dtype = tf.float32,
                 initializer = tf.ones([1, 100]))
-        self.z = z
 
         #reshape images and masks to be compatible with output from generator
         test_image = tf.convert_to_tensor(np.reshape(test_image,(1,64,64,3)), dtype=tf.float32)
@@ -396,22 +395,23 @@ class DCGAN(object):
         self.weight = tf.convert_to_tensor(weight, dtype=tf.float32)
 
         #Define loss as sum of both types of loss
-        self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
-            self.weight,
-            tf.multiply(self.G, self.mask) - tf.multiply(test_image, self.mask))))
-        #self.perceptual_loss = self.g_loss
-        self.perceptual_loss = self.D_
-        self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
+        #self.weighted_context_loss = tf.reduce_sum(tf.abs(tf.multiply(
+        #    self.weight,
+        #    tf.multiply(self.G, self.mask) - tf.multiply(test_image, self.mask))))
+        ##self.perceptual_loss = self.g_loss
+        #self.perceptual_loss = self.D_
+        #self.complete_loss = self.weighted_context_loss + lamda*self.perceptual_loss
 
         #define optimization function (gradient descent)
         #self.gradients = tf.gradients(self.complete_loss,self.z)
 
         #gradient descent back propogation to update input z
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0002)
-        gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
-        capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-        train_op = optimizer.apply_gradients(capped_gvs)
-        zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
+        #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
+        #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+        capped_gradient = tf.clip_by_value(self.grad_complete_loss, -1., 1.)
+        train_op = optimizer.apply_gradients((capped_gradient, z))
+        #zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
         tf.global_variables_initializer().run()
         for i in range(iterations):
             #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
@@ -420,6 +420,7 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
+                self.z: z
                 self.images: test_image,
                 self.is_training: False
             }
