@@ -437,7 +437,7 @@ class DCGAN(object):
             z = z - g[0]*0.001
             z = np.clip(z, -1, 1)
 
-        #Gz = ((Gz + 1) / 2) * 255
+        Gz = ((Gz + 1) / 2) * 255
         print(np.mean(Gz))
         print(np.min(Gz))
         print(np.max(Gz))
