@@ -355,11 +355,11 @@ class DCGAN(object):
         # MAKE SURE SELF.IMAGES HAS THE CORRECT SHAPE
 
         if mask_choice == 'block_mask':
-            masked_test, mask = block_mask(self.images[0],30)
+            masked_test, mask = block_mask(test_image,30)
         elif mask_choice == 'random_mask':
-            masked_test, mask = random_mask(self.images[0],0.6)
+            masked_test, mask = random_mask(test_image,0.6)
         elif mask_choice == 'half_missing_mask':
-            masked_test, mask = half_missing_mask(self.images[0])
+            masked_test, mask = half_missing_mask(test_image)
         else:
             print('incorrect mask choice')
 
