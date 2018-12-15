@@ -1,4 +1,4 @@
-#Final project ECBM4040
+# Final project ECBM4040
 
 How to run the code:
 Run Project_Notebook.ipynb to run code and train DCGAN
