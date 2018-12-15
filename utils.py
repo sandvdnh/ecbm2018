@@ -26,26 +26,26 @@ def block_mask(data,block_size):
 ############################################################################################
 
 
-#return error message if block_size is too large
-if block_size >= data.shape[1]:
-    print('error, block_size is larger than data')
-    return 0
-else:
-    #get shape of data
-        M, N = 64
-    #create mask of ones of the same size
-    mask = np.ones((M,M,3,1))
-    #find starting index value for the center block
-    start_point = np.ceil(M/2) - (np.ceil(block_size/2) - 1) - 1
-    #set all values within center block of the mask to 0
-    for k in range(3):
-        for i in range(block_size):
-            for j in range(block_size):
-                mask[ int(start_point+i) ,int(start_point+j),k] = 0
-    #multiply mask with all entries in data
-    mask = np.tile(mask,N)
-    masked_data = np.multiply(data,mask)
-    return masked_data, mask
+    #return error message if block_size is too large
+    if block_size >= data.shape[1]:
+        print('error, block_size is larger than data')
+        return 0
+    else:
+        #get shape of data
+            M, N = 64
+        #create mask of ones of the same size
+        mask = np.ones((M,M,3,1))
+        #find starting index value for the center block
+        start_point = np.ceil(M/2) - (np.ceil(block_size/2) - 1) - 1
+        #set all values within center block of the mask to 0
+        for k in range(3):
+            for i in range(block_size):
+                for j in range(block_size):
+                    mask[ int(start_point+i) ,int(start_point+j),k] = 0
+        #multiply mask with all entries in data
+        mask = np.tile(mask,N)
+        masked_data = np.multiply(data,mask)
+        return masked_data, mask
 
 
 
