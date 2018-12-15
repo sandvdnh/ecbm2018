@@ -232,9 +232,11 @@ class DCGAN(object):
                 scope.reuse_variables()
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', with_w=True)
     
-            hs = [None]
-            hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
-            hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
+            #hs = [None]
+            #hs[0] = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
+            #hs[0] = tf.nn.relu(self.g_bns[0](hs[0], self.is_training))
+            var_ = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
+            out_ = tf.nn.relu(self.g_bns[0](var_, self.is_training))
 
             out1, _, _ = conv2d_transpose(
                     hs[0],
@@ -299,21 +301,10 @@ class DCGAN(object):
         else:
             print('incorrect mask choice')
 
-        #z = tf.get_variable(
-        #        'random_vector',
-        #        dtype = tf.float32,
-        #        initializer = tf.ones([100]))
-        #print('shape of z: ', z)
-
         #reshape images and masks to be compatible with output from generator
         test_image = np.reshape(test_image,(1,64,64,3))
         mask = np.reshape(mask,(1,64,64,3))
         masked_test = np.reshape(masked_test,(1,64,64,3))
-
-        #change image, mask and learning rate to tensors
-        #self.image = tf.convert_to_tensor(test_image, dtype=tf.float32)
-        #self.mask = tf.convert_to_tensor(mask,dtype=tf.float32)
-        #self.learning_rate = tf.convert_to_tensor(learning_rate,dtype=tf.float32)
 
         #generate weights for contextual loss
         weight = np.zeros_like(mask)
