@@ -370,7 +370,7 @@ class DCGAN(object):
         #self.z = z
 
         #reshape images and masks to be compatible with output from generator
-        test_image = np.reshape(test_image,(1,64,64,3))
+        test_image = tf.convert_to_tensor(np.reshape(test_image,(1,64,64,3)), dtype=tf.float32)
         mask = np.reshape(mask,(1,64,64,3))
         masked_test = np.reshape(masked_test,(1,64,64,3))
 
