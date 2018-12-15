@@ -15,7 +15,7 @@ import itertools
 from glob import glob
 import tensorflow as tf
 
-from ops2 import *
+#from ops2 import *
 from utils2 import *
 from model_funcs import *
 
