@@ -24,15 +24,13 @@ def block_mask(data,block_size):
 #masked_data: M x M x 3 xN numpy array with central block set to 0
 #mask: set of masks
 ############################################################################################
-
-
     #return error message if block_size is too large
     if block_size >= data.shape[1]:
         print('error, block_size is larger than data')
         return 0
     else:
         #get shape of data
-            M, N = 64
+        M, N = 64
         #create mask of ones of the same size
         mask = np.ones((M,M,3,1))
         #find starting index value for the center block
