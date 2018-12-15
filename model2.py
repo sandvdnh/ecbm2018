@@ -13,7 +13,7 @@ import tensorflow as tf
 import time
 import math
 import itertools
-#from utils2 import *
+from utils import *
 from model_funcs import *
 from utils import block_mask
 
