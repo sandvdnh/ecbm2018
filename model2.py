@@ -366,11 +366,11 @@ class DCGAN(object):
         else:
             print('incorrect mask choice')
 
-        z = tf.get_variable(
-                'random_vector',
-                dtype = tf.float32,
-                initializer = tf.ones([100]))
-        print('shape of z: ', z)
+        #z = tf.get_variable(
+        #        'random_vector',
+        #        dtype = tf.float32,
+        #        initializer = tf.ones([100]))
+        #print('shape of z: ', z)
 
         #reshape images and masks to be compatible with output from generator
         test_image = tf.convert_to_tensor(np.reshape(test_image,(1,64,64,3)), dtype=tf.float32)
@@ -412,7 +412,7 @@ class DCGAN(object):
         #gradient descent back propogation to update input z
         #gvs = optimizer.compute_gradients(self.complete_loss, [self.z])
         #capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-        #zhats = np.random.uniform(-1, 1, [self.z_dim]).astype(np.float32)
+        z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32)
         tf.global_variables_initializer().run()
         for i in range(iterations):
             #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
@@ -421,7 +421,7 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
-                self.z: tf.reshape(z, (1, 100)),
+                self.z: z,
                 self.images: test_image,
                 self.is_training: False
             }
