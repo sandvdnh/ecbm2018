@@ -27,7 +27,9 @@ Run Project_notebook.ipynb should automatically download the datasets and has a 
 Those links are also posted below:
 
 celeba:
+
 SVHN: http://ufldl.stanford.edu/housenumbers/
+
 cars:
 
 
