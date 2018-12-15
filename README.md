@@ -1,8 +1,23 @@
 # Final project ECBM4040
 
-How to run the code:
+The code can be run from either the jupyter notebook 'Project_Notebook.ipynb' or the standalone script 'standalone.py'.
+Both of them import helper functions from ops.py and model_funcs.py, which take care of data loading/batch generation and layer operations like linear/convolutions and batch norm.
 
-Run Project_Notebook.ipynb to train DCGAN and implement inpainting
+The code is meant to be agnostic towards the specific dataset (CelebA, Cars, or SVHN), and model_funcs.py contains methods to generate batches from all three datasets.
+However, we only tested it on the CelebA dataset. To get it working on either cars or svhn, it might be necessary to change the preprocessing procedure in model_funcs.py
+because we currently run into memory errors when loading all data files at once (even on google cloud).
+
+
+## Download the dataset
+
+The CelebA dataset can be downloaded from https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing
+and should be extracted into './datasets/' (such that images are stored in './datasets/img_align_celeba/')
+In ./datasets/, make a new folder called 'img_align_celeba_preprocessed'.
+After that, run model_funcs.py, which will preprocess the images and save them in img_align_celeba_preprocessed, in order to speed up training (and to avoid memory errors).
+
+This sets up the data. You can now run either the notebook or the standalone script to start training the DCGAN.
+Periodically, it will write out checkpoint files to a checkpoint folder (which will be created automatically if it's not already there). 
+Sample images during training (to evaluate the quality of the generator) are stored in the samples folder (which is also automatically created if it's not already there).
 
 
 ## Function of each file:
