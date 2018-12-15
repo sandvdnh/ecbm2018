@@ -421,7 +421,7 @@ class DCGAN(object):
                 #self.mask: mask,
                 #self.lowres_mask: lowres_mask,
                 #image: np.reshape(test_image, (1, 64, 64, 3)),
-                self.mask: weight[0]
+                self.mask: weight[0],
                 self.z: z,
                 self.images: test_image,
                 self.is_training: False
