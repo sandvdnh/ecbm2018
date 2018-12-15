@@ -367,6 +367,7 @@ class DCGAN(object):
                 'random_vector',
                 dtype = tf.float32,
                 initializer = tf.ones([100]))
+        print('shape of z: ', z)
 
         #reshape images and masks to be compatible with output from generator
         test_image = tf.convert_to_tensor(np.reshape(test_image,(1,64,64,3)), dtype=tf.float32)
