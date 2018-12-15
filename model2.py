@@ -420,7 +420,7 @@ class DCGAN(object):
         #config.batch_size = 1
         self.batch_size = 1
         z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32)
-        tf.global_variables_initializer().run()
+        #tf.global_variables_initializer().run()
         for i in range(iterations):
             #loss, g, Gz = self.sess.run([self.complete_loss,self.gradients,self.generator(self.z)])
             fd = {
