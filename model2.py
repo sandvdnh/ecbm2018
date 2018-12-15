@@ -192,16 +192,16 @@ class DCGAN(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 # Update D network
-                d_optim_ = self.sess.run([d_optim, self.d_sum],
-                    feed_dict={ self.images: batch_images, self.z: batch_z, self.is_training: True })
+                d_optim_ = self.sess.run([d_optim],
+                    feed_dict={self.images: batch_images, self.z: batch_z, self.is_training: True })
 
                 # Update G network
-                g_optim_ = self.sess.run([g_optim, self.g_sum],
-                    feed_dict={ self.z: batch_z, self.is_training: True })
+                g_optim_ = self.sess.run([g_optim],
+                    feed_dict={self.z: batch_z, self.is_training: True})
 
                 # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                g_optim_ = self.sess.run([g_optim, self.g_sum],
-                    feed_dict={ self.z: batch_z, self.is_training: True })
+                g_optim_ = self.sess.run([g_optim],
+                    feed_dict={self.z: batch_z, self.is_training: True})
                 
                 # calculate the error
                 errD_fake = self.d_loss_fake.eval({self.z: batch_z, self.is_training: False})
