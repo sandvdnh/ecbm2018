@@ -174,7 +174,7 @@ class DCGAN(object):
 
                 counter += 1
                 # print out status every n number of iterations
-                if np.mod(counter, 1) == 0 or counter < 3:
+                if np.mod(counter, 50) == 0 or counter < 3:
                     print("epoch: {:2d}/{:2d} || iteration: {:4d}/{:4d} || time: {:4.4f} || discriminator loss: {:.8f} || generator loss: {:.8f}".format(
                         epoch,
                         config.epoch,
