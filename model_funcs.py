@@ -364,7 +364,7 @@ def lrelu(
         f_2 = 0.5 * (1 - leak)
         return f_1 * x + f_2 * abs(x)
 
-def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
+def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, return_vars=False):
     shape = input_.get_shape().as_list()
 
     with tf.variable_scope(scope or "Linear"):
