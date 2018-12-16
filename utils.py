@@ -4,13 +4,6 @@ import random
 import scipy.misc
 from time import gmtime, strftime
 
-def save_image(image, size, path):
-    image = (image + 1) / 2
-    return scipy.misc.imsave(path, (255 * image).astype(np.uint8))
-
-#def imread(path):
-#    return scipy.misc.imread(path, mode='RGB').astype(np.float)
-
 def crop(image, cropx = 64, cropy = 64):
     '''
     crops an image
@@ -128,4 +121,8 @@ def half_missing_mask(data):
             mask[i,:,:,:] = next_mask
             masked_data[i,:,:,:] = np.multiply(data[i,:,:,:] , mask[i,:,:,:])
     return masked_data, mask
+
+def save_image(image, size, path):
+    image = (image + 1) / 2
+    return scipy.misc.imsave(path, (255 * image).astype(np.uint8))
 
