@@ -205,7 +205,7 @@ class DCGAN(object):
         Returns:
         h4 - tensor of shape [64, 2]
         '''
-        with tf.variable_scope("discriminator") as scope:
+        with tf.variable_scope("discriminator",reuse=tf.AUTO_REUSE) as scope:
             if reuse:
                 scope.reuse_variables()
             h0 = lrelu(conv2d(image, DISCRIMINATOR_F, name='d_h0_conv'))
@@ -225,7 +225,7 @@ class DCGAN(object):
         Returns:
         output - tensor of shape [None, 64, 64, 3]
         '''
-        with tf.variable_scope("generator") as scope:
+        with tf.variable_scope("generator", reuse=tf.AUTO_REUSE) as scope:
             if reuse:
                 scope.reuse_variables()
             self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', return_vars=True)
@@ -284,9 +284,10 @@ class DCGAN(object):
 
         #apply mask to image and keep mask for later use
         #self.image = test_image
+        print(self.load(self.checkpoint_dir))
 
         # MAKE SURE SELF.IMAGES HAS THE CORRECT SHAPE
-
+        test_image = np.reshape(test_image, (1, 64, 64, 3))
         if mask_choice == 'block_mask':
             masked_test, mask = block_mask(test_image,30)
         elif mask_choice == 'random_mask':
@@ -317,7 +318,7 @@ class DCGAN(object):
 
         self.batch_size = 1
         z = np.random.uniform(-1, 1, [1, 100]).astype(np.float32)
-        tf.global_variables_initializer().run()
+        # tf.global_variables_initializer().run()
         for i in range(iterations):
             fd = {
                 self.mask: weight[0],
@@ -325,13 +326,13 @@ class DCGAN(object):
                 self.images: test_image,
                 self.is_training: False
             }
-            run = [self.complete_loss, self.capped_gradient]
-            loss, g = self.sess.run(run, feed_dict=fd)
+            run = [self.complete_loss, self.capped_gradient, self.G]
+            loss, g, img = self.sess.run(run, feed_dict=fd)
             z = z - g[0]*learning_rate
 
-        save_image(g, os.path.join(config.sample_dir, 'generated_before_inpainting.png'))
+        save_image(img, os.path.join(config.sample_dir, 'generated_before_inpainting.png'))
         #crop out center and add it to test image
-        fill = tf.multiply(np.ones_like(self.mask) - self.mask, g)
+        fill = tf.multiply(np.ones_like(self.mask) - self.mask, img)
         new_image =  masked_test + fill
         save_image(new_image, os.path.join(config.sample_dir, 'inpainted.png'))
         return new_image

@@ -46,7 +46,7 @@ def block_mask(data,block_size):
                 for j in range(block_size):
                     mask[0, int(start_point+i) ,int(start_point+j),k] = 0
         #multiply mask with all entries in data
-        masked_data = np.zeros(N,M,M,3)
+        masked_data = np.zeros((N,M,M,3))
         for i in range(N):
             masked_data[i,:,:,:] = np.multiply(data[i,:,:,:],mask)
             
