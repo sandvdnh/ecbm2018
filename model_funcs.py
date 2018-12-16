@@ -262,7 +262,10 @@ def get_batches_cars(batch_size):
 
 
 class batch_norm(object):
-    """Code modification of http://stackoverflow.com/a/33950177"""
+    '''
+    Implementation of batch norm
+    FROM STACK OVERFLOW
+    '''
     def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
         with tf.variable_scope(name):
             self.epsilon = epsilon
@@ -275,28 +278,24 @@ class batch_norm(object):
                                             center=True, scale=True, is_training=train, scope=self.name)
 
 def binary_cross_entropy(preds, targets, name=None):
-    """Computes binary cross entropy given `preds`.
-
-    For brevity, let `x = `, `z = targets`.  The logistic loss is
-
-        loss(x, z) = - sum_i (x[i] * log(z[i]) + (1 - x[i]) * log(1 - z[i]))
-
-    Args:
-        preds: A `Tensor` of type `float32` or `float64`.
-        targets: A `Tensor` of the same type and shape as `preds`.
-    """
-    eps = 1e-12
+    '''
+    Computes cross-entropy
+    FROM STACK OVERFLOW
+    '''
+    eps = 1e-12 ## parameter needed to ensure regular behavior
     with ops.op_scope([preds, targets], name, "bce_loss") as name:
         preds = ops.convert_to_tensor(preds, name="preds")
         targets = ops.convert_to_tensor(targets, name="targets")
         return tf.reduce_mean(-(targets * tf.log(preds + eps) +
                               (1. - targets) * tf.log(1. - preds + eps)))
 
-def conv_cond_concat(x, y):
-    """Concatenate conditioning vector on feature map axis."""
-    x_shapes = x.get_shape()
-    y_shapes = y.get_shape()
-    return tf.concat(3, [x, y*tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])])
+#def conv_cond_concat(x, y):
+#    '''
+#    
+#    '''
+#    x_shapes = x.get_shape()
+#    y_shapes = y.get_shape()
+#    return tf.concat(3, [x, y*tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])])
 
 def conv2d(input_, output_dim,
            k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
