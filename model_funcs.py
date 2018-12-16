@@ -372,7 +372,7 @@ def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, return_
                                  tf.random_normal_initializer(stddev=stddev))
         bias = tf.get_variable("bias", [output_size],
             initializer=tf.constant_initializer(bias_start))
-        if with_w:
+        if return_vars:
             return tf.matmul(input_, matrix) + bias, matrix, bias
         else:
             return tf.matmul(input_, matrix) + bias
