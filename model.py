@@ -188,8 +188,7 @@ class DCGAN(object):
                 # to generate realistic faces
                 if np.mod(counter, 100) == 0:
                     samples = self.sess.run(self.G, feed_dict={self.z: sample_z, self.is_training: False})
-                    save_image(samples[0], [1, 1],
-                                './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
+                    save_image(samples[0], './samples/train_{:02d}_{:04d}.png'.format(epoch, idx))
                     print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(0, 0))
 
                 # save checkpoint every 400 iterations
@@ -330,11 +329,11 @@ class DCGAN(object):
             loss, g = self.sess.run(run, feed_dict=fd)
             z = z - g[0]*learning_rate
 
-        #rescale image Gz properly
-        Gz = ((Gz + 1) / 2) * 255
+        save_image(g, os.path.join(config.sample_dir, 'generated_before_inpainting.png'))
         #crop out center and add it to test image
-        fill = tf.multiply(tf.ones_like(self.mask) - self.mask,Gz)
+        fill = tf.multiply(np.ones_like(self.mask) - self.mask, g)
         new_image =  masked_test + fill
+        save_image(new_image, os.path.join(config.sample_dir, 'inpainted.png'))
         return new_image
 
     def save(self, checkpoint_dir, step):

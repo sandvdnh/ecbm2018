@@ -122,7 +122,7 @@ def half_missing_mask(data):
             masked_data[i,:,:,:] = np.multiply(data[i,:,:,:] , mask[i,:,:,:])
     return masked_data, mask
 
-def save_image(image, size, path):
+def save_image(image, path):
     image = (image + 1) / 2
     return scipy.misc.imsave(path, (255 * image).astype(np.uint8))
 
