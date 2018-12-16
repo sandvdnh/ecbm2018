@@ -13,7 +13,7 @@ from scipy.io import loadmat
 from scipy.misc import imresize, imsave
 from utils import crop
 import math
-from utils2 import *
+from utils import *
 from tensorflow.python.framework import ops
 
 
