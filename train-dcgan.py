@@ -10,8 +10,7 @@ import os
 import scipy.misc
 import numpy as np
 
-from model2 import DCGAN
-from utils2 import pp, visualize, to_json
+from model import DCGAN
 from model_funcs import *
 
 import tensorflow as tf
