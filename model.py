@@ -229,7 +229,7 @@ class DCGAN(object):
         with tf.variable_scope("generator") as scope:
             if reuse:
                 scope.reuse_variables()
-            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', with_w=True)
+            self.z_, self.h0_w, self.h0_b = linear(z, GENERATOR_F * 16 * 4 * 4, 'g_h0_lin', return_vars=True)
     
             var_ = tf.reshape(self.z_, [-1, 4, 4, GENERATOR_F * 16])
             out_ = tf.nn.relu(self.g_bns[0](var_, self.is_training))
@@ -238,7 +238,7 @@ class DCGAN(object):
                     out_,
                     [self.batch_size, 8, 8, GENERATOR_F * 8],
                     name='g_h1',
-                    with_w=True
+                    return_vars=True
                     )
             out1 = tf.nn.relu(self.g_bns[1](out1, self.is_training))
 
@@ -246,7 +246,7 @@ class DCGAN(object):
                     out1,
                     [self.batch_size, 16, 16, GENERATOR_F * 4],
                     name='g_h2',
-                    with_w=True
+                    return_vars=True
                     )
             out2 = tf.nn.relu(self.g_bns[2](out2, self.is_training))
 
@@ -254,7 +254,7 @@ class DCGAN(object):
                     out2,
                     [self.batch_size, 32, 32, GENERATOR_F * 2],
                     name='g_h3',
-                    with_w=True
+                    return_vars=True
                     )
             out3 = tf.nn.relu(self.g_bns[3](out3, self.is_training))
 
@@ -262,7 +262,7 @@ class DCGAN(object):
                     out3,
                     [self.batch_size, 64, 64, 3],
                     name='g_h4',
-                    with_w=True
+                    return_vars=True
                     )
             return tf.nn.tanh(out4)
 

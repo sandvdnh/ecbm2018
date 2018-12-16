@@ -280,7 +280,6 @@ class batch_norm(object):
 def binary_cross_entropy(preds, targets, name=None):
     '''
     Computes cross-entropy
-    FROM STACK OVERFLOW
     '''
     eps = 1e-12 ## parameter needed to ensure regular behavior
     with ops.op_scope([preds, targets], name, "bce_loss") as name:
@@ -298,6 +297,9 @@ def conv2d(
         width_=2,
         std=0.02,
         name="conv2d"):
+    '''
+    conv2d op
+    '''
     with tf.variable_scope(name):
         # Define weights
         w = tf.get_variable(
@@ -324,7 +326,10 @@ def conv2d_transpose(
         width_=2,
         std=0.02,
         name="conv2d_transpose",
-        with_w=False):
+        return_vars=False):
+    '''
+    transposed conv2d
+    '''
     with tf.variable_scope(name):
         # Define weights
         w = tf.get_variable(
@@ -341,17 +346,23 @@ def conv2d_transpose(
         biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
         deconv = tf.nn.bias_add(deconv, biases)
 
-        # return result and variables depending on the value of the boolean with_w
-        if with_w:
+        # return result and variables depending on the value of the boolean return_vars
+        if return_vars:
             return deconv, w, biases
         else:
             return deconv
 
-def lrelu(x, leak=0.2, name="lrelu"):
+def lrelu(
+        x,
+        leak=0.2,
+        name="lrelu"):
+    '''
+    leaky Rectified Linear Unit
+    '''
     with tf.variable_scope(name):
-        f1 = 0.5 * (1 + leak)
-        f2 = 0.5 * (1 - leak)
-        return f1 * x + f2 * abs(x)
+        f_1 = 0.5 * (1 + leak)
+        f_2 = 0.5 * (1 - leak)
+        return f_1 * x + f_2 * abs(x)
 
 def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
     shape = input_.get_shape().as_list()
